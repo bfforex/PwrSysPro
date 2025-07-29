@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PwrSysPro V1.1 - Advanced LV Transformer Sizing Tool</title>
+    <title>PwrSysPro V1.1 - LV Transformer Sizing Tool</title>
     <!-- Self-hosted FontAwesome icons using Unicode fallbacks -->
     <style>
         /* FontAwesome Icons CSS - Essential icons only for offline use */
@@ -556,6 +556,67 @@
             border-left: 4px solid #4a90e2;
         }
 
+        .cable-compliant {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .cable-warning {
+            background: #fff8e1;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .cable-critical {
+            background: #ffebee;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .compliance-issues {
+            background: #ffebee;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.9em;
+        }
+
+        .corrective-action {
+            background: #e3f2fd;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+
+        .pole-mount-warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .pole-mount-checklist {
+            background: white;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .pole-mount-checklist ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+
+        .pole-mount-checklist li {
+            margin: 0.25rem 0;
+        }
+
         .info-tooltip {
             cursor: help;
             opacity: 0.7;
@@ -604,7 +665,7 @@
                 </div>
                 <div>
                     <div class="logo-text">PwrSysPro</div>
-                    <div style="color: #6c757d; font-size: 14px;">Advanced Transformer Sizing</div>
+                    <div style="color: #6c757d; font-size: 14px;">Low Voltage Transformer Sizing</div>
                 </div>
             </div>
             <div class="header-actions">
@@ -871,13 +932,29 @@
                             <label>
                                 <i class="fas fa-map-marker-alt"></i>
                                 Mounting Location
+                                <i class="fas fa-info-circle info-tooltip" title="Pole Mount: Requires special considerations for oil-immersed transformers per NEC 450.23"></i>
                             </label>
                             <select id="mounting_location" onchange="updateProgress()">
                                 <option value="indoor" selected>Indoor</option>
                                 <option value="outdoor">Outdoor</option>
                                 <option value="pad_mount">Pad Mount</option>
+                                <option value="pole_mount">Pole Mount</option>
                                 <option value="vault">Vault</option>
                             </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-bolt"></i>
+                                Primary System Fault Current (MVA)
+                                <i class="fas fa-info-circle info-tooltip" title="Available fault current from primary system. Use 'Infinite' for infinite bus assumption (conservative approach)"></i>
+                            </label>
+                            <select id="primary_fault_current_type" onchange="handlePrimaryFaultCurrent(); updateProgress()">
+                                <option value="infinite" selected>Infinite Bus (Conservative)</option>
+                                <option value="limited">Limited (Specify MVA)</option>
+                            </select>
+                            <input type="number" id="primary_fault_current_mva" step="1" min="1" value="100" 
+                                   style="display: none; margin-top: 0.5rem;" 
+                                   placeholder="Enter primary fault MVA" onchange="updateProgress()">
                         </div>
                         <div class="form-field">
                             <label>
@@ -965,8 +1042,8 @@
     </div>
 
     <footer class="footer">
-        <p>© 2025 PwrSysPro - Professional Electrical Engineering Solutions</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9em;">Advanced LV Transformer Sizing Tool v1.1 | NEC, IEC, AS/NZ, CEC  Compliance & Design Standard Support</p>
+        <p>© 2025 PwrSysPro - By Benjie Faraon</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9em;">LV Transformer Sizing Tool v1.1 | NEC, IEC, AS/NZ, CEC  Compliance & Design Standard Support</p>
     </footer>
 
     <!-- Inline jsPDF for PDF generation -->
@@ -1110,6 +1187,21 @@
             updateProgress();
         }
 
+        // Handle primary fault current input
+        function handlePrimaryFaultCurrent() {
+            const select = document.getElementById('primary_fault_current_type');
+            const mvaInput = document.getElementById('primary_fault_current_mva');
+            
+            if (select.value === 'limited') {
+                mvaInput.style.display = 'block';
+                mvaInput.required = true;
+            } else {
+                mvaInput.style.display = 'none';
+                mvaInput.required = false;
+            }
+            updateProgress();
+        }
+
         // Get load safety factor based on design standard
         function getLoadSafetyFactor(load_type, design_standard) {
             const factors = {
@@ -1224,8 +1316,57 @@
             return standard_ocpd.find(size => size >= current) || Math.ceil(current / 100) * 100;
         }
 
-        // Enhanced cable sizing with all derating factors
-        function calculateEnhancedCableSize(current, distance, voltage, phase, material, insulation, installation, conductors, ambient_temp, maxVD, design_standard) {
+        // Enhanced fault current calculation considering primary system impedance
+        function calculateEnhancedFaultCurrent(transformer_size, transformer_impedance, load_voltage, phase, primary_fault_type, primary_fault_mva) {
+            // Convert transformer impedance to per-unit on transformer base
+            const transformer_impedance_pu = transformer_impedance / 100;
+            
+            let primary_system_impedance_pu = 0; // Default for infinite bus
+            let analysis_notes = '';
+            
+            if (primary_fault_type === 'limited' && primary_fault_mva) {
+                // Calculate primary system impedance on transformer base
+                // X_primary_pu = (Transformer_MVA / Primary_Fault_MVA)
+                primary_system_impedance_pu = (transformer_size / 1000) / primary_fault_mva;
+                analysis_notes = `Primary system contribution: ${primary_fault_mva} MVA`;
+            } else {
+                // Infinite bus assumption
+                primary_system_impedance_pu = 0;
+                analysis_notes = 'Infinite bus assumption (conservative)';
+            }
+            
+            // Total impedance is sum of primary system and transformer impedances
+            const total_impedance_pu = primary_system_impedance_pu + transformer_impedance_pu;
+            
+            // Calculate fault current
+            const base_current = phase === 'three' ?
+                (transformer_size * 1000) / (Math.sqrt(3) * load_voltage) :
+                (transformer_size * 1000) / load_voltage;
+                
+            const fault_current = base_current / total_impedance_pu;
+            const kaic = Math.ceil(fault_current / 1000);
+            
+            // Calculate individual contributions for analysis
+            const transformer_only_fault = base_current / transformer_impedance_pu;
+            const primary_contribution = primary_fault_type === 'limited' ? 
+                `Primary system limits fault current to ${(primary_fault_mva * 1000 / (phase === 'three' ? Math.sqrt(3) * load_voltage : load_voltage)).toFixed(0)} A` :
+                'Primary system assumed infinite (worst case)';
+            
+            return {
+                fault_current: fault_current,
+                kaic: kaic,
+                total_impedance_pu: total_impedance_pu,
+                transformer_impedance_pu: transformer_impedance_pu,
+                primary_system_impedance_pu: primary_system_impedance_pu,
+                transformer_only_fault: transformer_only_fault,
+                analysis_notes: analysis_notes,
+                primary_contribution: primary_contribution,
+                is_infinite_bus: primary_fault_type === 'infinite'
+            };
+        }
+
+        // Enhanced cable sizing with all derating factors and OCPD compliance
+        function calculateEnhancedCableSize(current, distance, voltage, phase, material, insulation, installation, conductors, ambient_temp, maxVD, design_standard, ocpd_rating = null) {
             const wireSizes = [
                 {awg: '14', ampacity: 20}, {awg: '12', ampacity: 25}, {awg: '10', ampacity: 35},
                 {awg: '8', ampacity: 50}, {awg: '6', ampacity: 65}, {awg: '4', ampacity: 85},
@@ -1259,10 +1400,16 @@
             const totalDerating = installationFactor * conductorFactor * tempFactor;
             const adjustedCurrent = current / totalDerating;
 
-            // Find minimum size for adjusted ampacity
+            // Find minimum size for adjusted ampacity AND OCPD compliance
             let selectedSize = wireSizes.find(size => {
                 const baseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
-                return baseAmpacity >= adjustedCurrent;
+                const deratedAmpacity = Math.round(baseAmpacity * totalDerating);
+                
+                // Must meet both load current and OCPD requirements (NEC 240.4)
+                const meetsLoadRequirement = baseAmpacity >= adjustedCurrent;
+                const meetsOCPDRequirement = ocpd_rating ? deratedAmpacity >= ocpd_rating : true;
+                
+                return meetsLoadRequirement && meetsOCPDRequirement;
             });
             
             if (!selectedSize) selectedSize = wireSizes[wireSizes.length - 1];
@@ -1285,22 +1432,29 @@
 
                 if (voltageDropPercent <= maxVD) {
                     const baseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
-                    finalSize = {
-                        ...size,
-                        ampacity: Math.round(baseAmpacity * totalDerating),
-                        baseAmpacity: baseAmpacity,
-                        resistance: resistance,
-                        reactance: reactance,
-                        voltageDrop: voltageDropPercent,
-                        voltageDropVolts: voltageDropVolts,
-                        derating: {
-                            installation: installationFactor,
-                            conductor: conductorFactor,
-                            temperature: tempFactor,
-                            total: totalDerating
-                        }
-                    };
-                    break;
+                    const deratedAmpacity = Math.round(baseAmpacity * totalDerating);
+                    
+                    // Verify OCPD compliance before finalizing
+                    const meetsOCPDRequirement = ocpd_rating ? deratedAmpacity >= ocpd_rating : true;
+                    
+                    if (meetsOCPDRequirement) {
+                        finalSize = {
+                            ...size,
+                            ampacity: deratedAmpacity,
+                            baseAmpacity: baseAmpacity,
+                            resistance: resistance,
+                            reactance: reactance,
+                            voltageDrop: voltageDropPercent,
+                            voltageDropVolts: voltageDropVolts,
+                            derating: {
+                                installation: installationFactor,
+                                conductor: conductorFactor,
+                                temperature: tempFactor,
+                                total: totalDerating
+                            }
+                        };
+                        break;
+                    }
                 }
             }
 
@@ -1427,11 +1581,59 @@
                 </div>`;
             }
 
+            // Pole-mounted oil-immersed transformer warnings (NEC 450.23)
+            if (mounting_location === 'pole_mount' && transformer_type === 'oil') {
+                warnings += `<div class="pole-mount-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Pole-Mounted Oil-Immersed Transformer - NEC 450.23 Compliance Required:</strong>
+                    
+                    <div class="pole-mount-checklist">
+                        <p><strong>Critical Requirements Checklist:</strong></p>
+                        <ul>
+                            <li><strong>Fire Protection:</strong> Oil containment and spill mitigation systems</li>
+                            <li><strong>Structural Adequacy:</strong> Pole must support transformer weight and wind loads</li>
+                            <li><strong>Clearances:</strong> Minimum 8 feet above grade, appropriate spacing from buildings</li>
+                            <li><strong>Lightning Protection:</strong> Surge arresters and grounding per NEC 280</li>
+                            <li><strong>Environmental:</strong> Vegetation clearance and fire risk assessment</li>
+                            <li><strong>Maintenance Access:</strong> Safe access for inspection and servicing</li>
+                            <li><strong>Local Codes:</strong> Verify compliance with local fire and building codes</li>
+                            <li><strong>Utility Requirements:</strong> Coordination with serving utility standards</li>
+                        </ul>
+                        
+                        <p style="margin-top: 1rem; font-weight: bold; color: #d63384;">
+                            ⚠ Engineering review and local authority approval typically required
+                        </p>
+                    </div>
+                </div>`;
+            }
+
+            // General pole-mount considerations for any transformer type
+            if (mounting_location === 'pole_mount') {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Pole-Mount Installation Notes:</strong>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Verify pole class and structural adequacy for transformer load</li>
+                        <li>Consider wind and ice loading per local building codes</li>
+                        <li>Ensure adequate working space per NEC 110.26</li>
+                        <li>Plan for maintenance access and safety considerations</li>
+                        <li>Coordinate with utility for primary connection requirements</li>
+                    </ul>
+                </div>`;
+            }
+
             return warnings;
         }
 
         // Enhanced results display
-        function displayEnhancedResults(transformer_size, transformer_impedance, flc_primary, flc_secondary, primary_ocpd, secondary_ocpd, fault_current, kaic, efficiency, primaryCable, secondaryCable, load_kw, warnings, nec_compliance) {
+        function displayEnhancedResults(transformer_size, transformer_impedance, flc_primary, flc_secondary, primary_ocpd, secondary_ocpd, fault_current, kaic, efficiency, primaryCable, secondaryCable, load_kw, warnings, nec_compliance, max_vd_primary, max_vd_secondary, faultAnalysis) {
+            // Calculate load currents for compliance checking
+            const primary_load_current = flc_primary;
+            const secondary_load_current = flc_secondary;
+            
+            // Generate compliance details
+            const primaryComplianceDetails = generateCableComplianceDetails(primaryCable, primary_ocpd, primary_load_current, max_vd_primary, 'Primary');
+            const secondaryComplianceDetails = generateCableComplianceDetails(secondaryCable, secondary_ocpd, secondary_load_current, max_vd_secondary, 'Secondary');
             const results = `
                 <div class="result-card">
                     <div class="result-title">
@@ -1463,11 +1665,17 @@
                 <div class="result-card">
                     <div class="result-title">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Fault Current & KAIC Rating
+                        Enhanced Fault Current Analysis
                     </div>
                     <div class="result-value">
-                        Fault Current: ${fault_current.toFixed(0)} A<br>
-                        KAIC Rating: ${kaic} kA
+                        <strong>Total Fault Current:</strong> ${fault_current.toFixed(0)} A<br>
+                        <strong>KAIC Rating:</strong> ${kaic} kA<br>
+                        <strong>Primary System:</strong> ${faultAnalysis.analysis_notes}<br>
+                        <strong>Total Impedance:</strong> ${(faultAnalysis.total_impedance_pu * 100).toFixed(2)}% p.u.<br>
+                        ${faultAnalysis.is_infinite_bus ? 
+                            `<em>Conservative infinite bus assumption</em>` : 
+                            `<em>Limited by primary system (${document.getElementById('primary_fault_current_mva').value} MVA)</em>`
+                        }
                     </div>
                 </div>
                 
@@ -1486,28 +1694,34 @@
                 <div class="cable-sizing-section">
                     <h3 style="color: #2c3e50; margin-bottom: 1rem;">
                         <i class="fas fa-plug"></i>
-                        Enhanced Cable Sizing with Derating Analysis
+                        Enhanced Cable Sizing with OCPD Compliance Analysis
                     </h3>
                     
                     <div class="cable-result">
-                        <div class="cable-recommendation ${getVoltageDropClass(primaryCable.voltageDrop, max_vd_primary)}">
+                        <div class="${getCableComplianceClass(primaryCable, primary_ocpd, primary_load_current, max_vd_primary)}">
                             <h4><i class="fas fa-arrow-up"></i> Primary Cable</h4>
                             <p><strong>Size:</strong> ${primaryCable.size}</p>
                             <p><strong>Base Ampacity:</strong> ${primaryCable.baseAmpacity} A</p>
                             <p><strong>Derated Ampacity:</strong> ${primaryCable.ampacity} A</p>
+                            <p><strong>OCPD Rating:</strong> ${primary_ocpd} A</p>
+                            <p><strong>Load Current:</strong> ${primary_load_current.toFixed(1)} A</p>
                             <p><strong>Derating Factor:</strong> ${(primaryCable.derating.total * 100).toFixed(1)}%</p>
                             <p><strong>Voltage Drop:</strong> ${primaryCable.voltageDrop.toFixed(2)}% (${primaryCable.voltageDropVolts.toFixed(1)}V)</p>
-                            <p><strong>Status:</strong> ${getVoltageDropStatus(primaryCable.voltageDrop, max_vd_primary)}</p>
+                            <p><strong>Status:</strong> ${getCableComplianceStatus(primaryCable, primary_ocpd, primary_load_current, max_vd_primary)}</p>
+                            ${primaryComplianceDetails}
                         </div>
                         
-                        <div class="cable-recommendation ${getVoltageDropClass(secondaryCable.voltageDrop, max_vd_secondary)}">
+                        <div class="${getCableComplianceClass(secondaryCable, secondary_ocpd, secondary_load_current, max_vd_secondary)}">
                             <h4><i class="fas fa-arrow-down"></i> Secondary Cable</h4>
                             <p><strong>Size:</strong> ${secondaryCable.size}</p>
                             <p><strong>Base Ampacity:</strong> ${secondaryCable.baseAmpacity} A</p>
                             <p><strong>Derated Ampacity:</strong> ${secondaryCable.ampacity} A</p>
+                            <p><strong>OCPD Rating:</strong> ${secondary_ocpd} A</p>
+                            <p><strong>Load Current:</strong> ${secondary_load_current.toFixed(1)} A</p>
                             <p><strong>Derating Factor:</strong> ${(secondaryCable.derating.total * 100).toFixed(1)}%</p>
                             <p><strong>Voltage Drop:</strong> ${secondaryCable.voltageDrop.toFixed(2)}% (${secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
-                            <p><strong>Status:</strong> ${getVoltageDropStatus(secondaryCable.voltageDrop, max_vd_secondary)}</p>
+                            <p><strong>Status:</strong> ${getCableComplianceStatus(secondaryCable, secondary_ocpd, secondary_load_current, max_vd_secondary)}</p>
+                            ${secondaryComplianceDetails}
                         </div>
                     </div>
                 </div>
@@ -1531,7 +1745,7 @@
         }
 
         // Enhanced calculation steps
-        function generateEnhancedCalculationSteps(load_kw, pf, load_type, safety_factor, base_kva, ambient_temp, temp_factor, kva, transformer_size, phase, service_voltage, load_voltage, flc_primary, flc_secondary, transformer_impedance, fault_current, kaic, primary_ocpd, secondary_ocpd, efficiency, primaryCable, secondaryCable, primary_dist_ft, secondary_dist_ft, conductor_material, insulation_type, installation_method, loaded_conductors, design_standard) {
+        function generateEnhancedCalculationSteps(load_kw, pf, load_type, safety_factor, base_kva, ambient_temp, temp_factor, kva, transformer_size, phase, service_voltage, load_voltage, flc_primary, flc_secondary, transformer_impedance, fault_current, kaic, primary_ocpd, secondary_ocpd, efficiency, primaryCable, secondaryCable, primary_dist_ft, secondary_dist_ft, conductor_material, insulation_type, installation_method, loaded_conductors, design_standard, faultAnalysis) {
             const calc = `
                 <h3 style="margin-bottom: 1rem; color: #2c3e50;">
                     <i class="fas fa-calculator"></i>
@@ -1599,11 +1813,20 @@
                 </div>
                 
                 <div class="step">
-                    <strong>8. Fault Current Analysis:</strong><br>
-                    Transformer Impedance: ${transformer_impedance}%<br>
-                    Fault Current = ${transformer_size} × 1000 ÷ ${phase === 'three' ? '(√3 × ' + load_voltage + ' × ' + (transformer_impedance/100) + ')' : '(' + load_voltage + ' × ' + (transformer_impedance/100) + ')'} = ${fault_current.toFixed(0)} A<br>
+                    <strong>8. Enhanced Fault Current Analysis:</strong><br>
+                    <strong>Primary System:</strong> ${faultAnalysis.analysis_notes}<br>
+                    <strong>Transformer Impedance:</strong> ${(faultAnalysis.transformer_impedance_pu * 100).toFixed(2)}% p.u.<br>
+                    <strong>Primary System Impedance:</strong> ${(faultAnalysis.primary_system_impedance_pu * 100).toFixed(3)}% p.u.<br>
+                    <strong>Total System Impedance:</strong> ${(faultAnalysis.total_impedance_pu * 100).toFixed(2)}% p.u.<br>
+                    <br>
+                    Base Current = ${transformer_size} × 1000 ÷ ${phase === 'three' ? '(√3 × ' + load_voltage + ')' : load_voltage} = ${((transformer_size * 1000) / (phase === 'three' ? Math.sqrt(3) * load_voltage : load_voltage)).toFixed(0)} A<br>
+                    Total Fault Current = Base Current ÷ Total Impedance = ${((transformer_size * 1000) / (phase === 'three' ? Math.sqrt(3) * load_voltage : load_voltage)).toFixed(0)} ÷ ${faultAnalysis.total_impedance_pu.toFixed(3)} = ${fault_current.toFixed(0)} A<br>
                     KAIC Rating = ${fault_current.toFixed(0)} ÷ 1000 = ${kaic} kA<br>
-                    <em>Note: Primary system fault current contribution should be analyzed separately for complete fault current study.</em>
+                    <br>
+                    ${faultAnalysis.is_infinite_bus ? 
+                        '<em>Using infinite bus assumption (conservative approach). Actual fault current may be lower if primary system impedance is considered.</em>' :
+                        `<em>Primary system limits available fault current. Transformer-only fault would be ${faultAnalysis.transformer_only_fault.toFixed(0)} A.</em>`
+                    }
                 </div>
                 
                 <div class="step">
@@ -1651,10 +1874,19 @@
                 const max_vd_primary = parseFloat(document.getElementById('max_vd_primary').value);
                 const max_vd_secondary = parseFloat(document.getElementById('max_vd_secondary').value);
                 const short_circuit_duration = parseFloat(document.getElementById('short_circuit_duration').value);
+                const primary_fault_current_type = document.getElementById('primary_fault_current_type').value;
+                const primary_fault_current_mva = primary_fault_current_type === 'limited' ? 
+                    parseFloat(document.getElementById('primary_fault_current_mva').value) : null;
 
                 // Validate inputs
-                if (!load_kw || !pf || !load_voltage || !service_voltage) {
-                    alert('Please fill in all required fields');
+                const validationErrors = validateInputs({
+                    load_kw,
+                    pf,
+                    ambient_temp
+                });
+                
+                if (validationErrors.length > 0) {
+                    alert('Input Validation Errors:\n- ' + validationErrors.join('\n- '));
                     return;
                 }
 
@@ -1695,21 +1927,25 @@
                 const primaryCable = calculateEnhancedCableSize(
                     flc_primary * 1.25, primary_dist_ft, service_voltage, phase, 
                     conductor_material, insulation_type, installation_method, 
-                    loaded_conductors, ambient_temp, max_vd_primary, design_standard
+                    loaded_conductors, ambient_temp, max_vd_primary, design_standard,
+                    primary_ocpd
                 );
                 
                 const secondaryCable = calculateEnhancedCableSize(
                     flc_secondary * 1.25, secondary_dist_ft, load_voltage, phase, 
                     conductor_material, insulation_type, installation_method, 
-                    loaded_conductors, ambient_temp, max_vd_secondary, design_standard
+                    loaded_conductors, ambient_temp, max_vd_secondary, design_standard,
+                    secondary_ocpd
                 );
 
-                // Enhanced fault current analysis
-                const fault_current = phase === 'three' ?
-                    (transformer_size * 1000) / (Math.sqrt(3) * load_voltage * (transformer_impedance / 100)) :
-                    (transformer_size * 1000) / (load_voltage * (transformer_impedance / 100));
-                    
-                const kaic = Math.ceil(fault_current / 1000);
+                // Enhanced fault current analysis with primary system consideration
+                const faultAnalysis = calculateEnhancedFaultCurrent(
+                    transformer_size, transformer_impedance, load_voltage, phase,
+                    primary_fault_current_type, primary_fault_current_mva
+                );
+                
+                const fault_current = faultAnalysis.fault_current;
+                const kaic = faultAnalysis.kaic;
 
                 // Efficiency calculation
                 const efficiency = calculateEfficiency(transformer_size, load_kw / transformer_size);
@@ -1725,7 +1961,8 @@
                 displayEnhancedResults(
                     transformer_size, transformer_impedance, flc_primary, flc_secondary,
                     primary_ocpd, secondary_ocpd, fault_current, kaic, efficiency,
-                    primaryCable, secondaryCable, load_kw, warnings, nec_compliance
+                    primaryCable, secondaryCable, load_kw, warnings, nec_compliance,
+                    max_vd_primary, max_vd_secondary, faultAnalysis
                 );
 
                 // Generate enhanced calculation steps
@@ -1736,7 +1973,7 @@
                     fault_current, kaic, primary_ocpd, secondary_ocpd, efficiency,
                     primaryCable, secondaryCable, primary_dist_ft, secondary_dist_ft,
                     conductor_material, insulation_type, installation_method,
-                    loaded_conductors, design_standard
+                    loaded_conductors, design_standard, faultAnalysis
                 );
 
             } catch (error) {
@@ -1756,6 +1993,82 @@
             if (actualVD <= maxVD * 0.8) return '✓ Excellent';
             if (actualVD <= maxVD) return '⚠ Acceptable';
             return '✗ Exceeds Limit';
+        }
+
+        // Enhanced cable compliance checking
+        function checkCableOCPDCompliance(cable, ocpd, load_current) {
+            const issues = [];
+            let status = 'compliant';
+            
+            // Check if derated ampacity meets OCPD requirement (NEC 240.4)
+            if (cable.ampacity < ocpd) {
+                issues.push(`Derated ampacity (${cable.ampacity}A) < OCPD (${ocpd}A) - NEC 240.4 violation`);
+                status = 'non-compliant';
+            }
+            
+            // Check if ampacity meets load requirement with safety margin
+            if (cable.ampacity < load_current * 1.25) {
+                issues.push(`Insufficient ampacity for load with 125% safety factor`);
+                if (status === 'compliant') status = 'marginal';
+            }
+            
+            return { status, issues, compliant: status === 'compliant' };
+        }
+
+        function getCableComplianceClass(cable, ocpd, load_current, maxVD) {
+            const ocpdCompliance = checkCableOCPDCompliance(cable, ocpd, load_current);
+            const vdCompliance = cable.voltageDrop <= maxVD;
+            
+            if (!ocpdCompliance.compliant || !vdCompliance) return 'cable-critical';
+            if (ocpdCompliance.status === 'marginal' || cable.voltageDrop > maxVD * 0.95) return 'cable-warning';
+            return 'cable-compliant';
+        }
+
+        function getCableComplianceStatus(cable, ocpd, load_current, maxVD) {
+            const ocpdCompliance = checkCableOCPDCompliance(cable, ocpd, load_current);
+            const vdCompliance = cable.voltageDrop <= maxVD;
+            
+            if (!ocpdCompliance.compliant) return '✗ OCPD Non-Compliant';
+            if (!vdCompliance) return '✗ Voltage Drop Exceeds Limit';
+            if (ocpdCompliance.status === 'marginal') return '⚠ Marginal - Review Load';
+            if (cable.voltageDrop > maxVD * 0.95) return '⚠ High Voltage Drop';
+            return '✓ Compliant';
+        }
+
+        function generateCableComplianceDetails(cable, ocpd, load_current, maxVD, side) {
+            const ocpdCompliance = checkCableOCPDCompliance(cable, ocpd, load_current);
+            let details = '';
+            
+            if (ocpdCompliance.issues.length > 0) {
+                details += `<div class="compliance-issues">
+                    <strong>${side} Cable Issues:</strong>
+                    <ul style="margin-left: 1rem; margin-top: 0.5rem;">`;
+                ocpdCompliance.issues.forEach(issue => {
+                    details += `<li>${issue}</li>`;
+                });
+                details += `</ul></div>`;
+                
+                // Suggest corrective actions
+                if (cable.ampacity < ocpd) {
+                    const nextSize = getNextLargerCableSize(cable.size);
+                    details += `<div class="corrective-action">
+                        <strong>Recommended Action:</strong> Increase cable size to at least ${nextSize} or reduce OCPD rating.
+                    </div>`;
+                }
+            }
+            
+            return details;
+        }
+
+        function getNextLargerCableSize(currentSize) {
+            const sizesOrder = ['14', '12', '10', '8', '6', '4', '3', '2', '1', '1/0', '2/0', '3/0', '4/0', 
+                              '250', '300', '350', '400', '500', '600', '700', '750', '800', '900', '1000'];
+            const currentIndex = sizesOrder.indexOf(currentSize.replace(' AWG', '').replace(' kcmil', ''));
+            if (currentIndex >= 0 && currentIndex < sizesOrder.length - 1) {
+                const nextSize = sizesOrder[currentIndex + 1];
+                return parseInt(nextSize) >= 250 ? `${nextSize} kcmil` : `${nextSize} AWG`;
+            }
+            return 'Contact engineer for larger size';
         }
 
         function calculateEfficiency(kva, loadFactor) {
@@ -1956,7 +2269,7 @@
             // Header
             doc.setFontSize(20);
             doc.setTextColor(102, 126, 234);
-            doc.text('PwrSysPro V1.1 Transformer Sizing Report', 20, 25);
+            doc.text('PwrSysPro V1.1 Low Voltage Transformer Sizing Report', 20, 25);
             
             doc.setFontSize(12);
             doc.setTextColor(0, 0, 0);
@@ -1991,6 +2304,7 @@
                 {label: 'Primary Distance', value: document.getElementById('primary_distance').value + ' ' + document.getElementById('distance_unit').value},
                 {label: 'Secondary Distance', value: document.getElementById('secondary_distance').value + ' ' + document.getElementById('distance_unit').value},
                 {label: 'Ambient Temperature', value: document.getElementById('ambient_temp').value + '°C'},
+                {label: 'Primary Fault Current', value: document.getElementById('primary_fault_current_type').value === 'infinite' ? 'Infinite Bus' : document.getElementById('primary_fault_current_mva').value + ' MVA'},
                 {label: 'Max VD Primary', value: document.getElementById('max_vd_primary').value + '%'},
                 {label: 'Max VD Secondary', value: document.getElementById('max_vd_secondary').value + '%'}
             ];
@@ -2151,6 +2465,16 @@
                 }
             }
         });
+
+        function validateInputs(inputs) {
+            const errors = [];
+            
+            if (!inputs.load_kw || inputs.load_kw <= 0) errors.push('Load (kW) must be positive');
+            if (!inputs.pf || inputs.pf < 0.5 || inputs.pf > 1.0) errors.push('Power Factor must be 0.5-1.0');
+            if (inputs.ambient_temp < -40 || inputs.ambient_temp > 60) errors.push('Ambient temperature out of range');
+            
+            return errors;
+        }
     </script>
 </body>
 </html>

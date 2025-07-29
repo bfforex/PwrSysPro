@@ -556,6 +556,16 @@
             border-left: 4px solid #4a90e2;
         }
 
+        .cable-recommendation.nec-non-compliant {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid #dc3545;
+            border: 2px solid #dc3545;
+        }
+
+        .cable-recommendation.nec-non-compliant h4 {
+            color: #dc3545;
+        }
+
         .info-tooltip {
             cursor: help;
             opacity: 0.7;
@@ -876,6 +886,7 @@
                                 <option value="indoor" selected>Indoor</option>
                                 <option value="outdoor">Outdoor</option>
                                 <option value="pad_mount">Pad Mount</option>
+                                <option value="pole_mount">Pole Mount</option>
                                 <option value="vault">Vault</option>
                             </select>
                         </div>
@@ -1345,6 +1356,185 @@
             };
         }
 
+        // Enhanced cable sizing with OCPD compliance checking per NEC requirements
+        function calculateEnhancedCableSizeWithOCPD(current, ocpd_rating, distance, voltage, phase, material, insulation, installation, conductors, ambient_temp, maxVD, design_standard) {
+            const wireSizes = [
+                {awg: '14', ampacity: 20}, {awg: '12', ampacity: 25}, {awg: '10', ampacity: 35},
+                {awg: '8', ampacity: 50}, {awg: '6', ampacity: 65}, {awg: '4', ampacity: 85},
+                {awg: '3', ampacity: 100}, {awg: '2', ampacity: 115}, {awg: '1', ampacity: 130},
+                {awg: '1/0', ampacity: 150}, {awg: '2/0', ampacity: 175}, {awg: '3/0', ampacity: 200},
+                {awg: '4/0', ampacity: 230}, {awg: '250', ampacity: 255}, {awg: '300', ampacity: 285},
+                {awg: '350', ampacity: 310}, {awg: '400', ampacity: 335}, {awg: '500', ampacity: 380},
+                {awg: '600', ampacity: 420}, {awg: '700', ampacity: 460}, {awg: '750', ampacity: 475},
+                {awg: '800', ampacity: 490}, {awg: '900', ampacity: 520}, {awg: '1000', ampacity: 545}
+            ];
+
+            // Get temperature rating and apply derating factors
+            const tempRating = temperatureRatings[insulation] || '75C';
+            const installationFactor = installationDerating[installation] || 1.0;
+            const conductorFactor = conductorDerating[Math.min(conductors, 10)] || 0.7;
+            
+            // Temperature derating for ambient temperature
+            let tempFactor = 1.0;
+            if (ambient_temp > 30) {
+                const tempDerating = {
+                    '60C': { 40: 0.88, 50: 0.75, 60: 0.58 },
+                    '75C': { 40: 0.91, 50: 0.82, 60: 0.71 },
+                    '90C': { 40: 0.94, 50: 0.87, 60: 0.76 }
+                };
+                
+                const closest_temp = ambient_temp <= 40 ? 40 : ambient_temp <= 50 ? 50 : 60;
+                tempFactor = tempDerating[tempRating][closest_temp] || 0.6;
+            }
+
+            // Total derating factor
+            const totalDerating = installationFactor * conductorFactor * tempFactor;
+            
+            // NEC requirement: Derated ampacity must be >= OCPD rating AND >= 125% of load current
+            const requiredAmpacity = Math.max(ocpd_rating, current * 1.25);
+
+            // Find minimum size for required ampacity (considering derating)
+            let selectedSize = null;
+            let necCompliant = false;
+            let complianceIssues = [];
+
+            for (let size of wireSizes) {
+                const baseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
+                const deratedAmpacity = baseAmpacity * totalDerating;
+                
+                if (deratedAmpacity >= requiredAmpacity) {
+                    selectedSize = size;
+                    necCompliant = deratedAmpacity >= ocpd_rating;
+                    break;
+                }
+            }
+            
+            if (!selectedSize) {
+                selectedSize = wireSizes[wireSizes.length - 1];
+                complianceIssues.push("No available conductor size meets required ampacity");
+            }
+
+            // Check OCPD compliance specifically
+            const baseAmpacity = ampacityTable[material][tempRating][selectedSize.awg] || selectedSize.ampacity;
+            const deratedAmpacity = baseAmpacity * totalDerating;
+            
+            if (deratedAmpacity < ocpd_rating) {
+                necCompliant = false;
+                complianceIssues.push(`Derated ampacity (${Math.round(deratedAmpacity)}A) is less than OCPD rating (${ocpd_rating}A)`);
+                
+                // Find compliant size
+                let suggestedSize = null;
+                for (let size of wireSizes) {
+                    const testBaseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
+                    const testDeratedAmpacity = testBaseAmpacity * totalDerating;
+                    if (testDeratedAmpacity >= ocpd_rating) {
+                        suggestedSize = size;
+                        break;
+                    }
+                }
+                if (suggestedSize) {
+                    complianceIssues.push(`Recommended: Use ${suggestedSize.awg} AWG or larger for OCPD compliance`);
+                }
+            }
+
+            // Check voltage drop and upsize if necessary
+            let finalSize = selectedSize;
+            for (let i = wireSizes.indexOf(selectedSize); i < wireSizes.length; i++) {
+                const size = wireSizes[i];
+                const resistance = wireResistance[material][size.awg];
+                const reactance = wireReactance[size.awg];
+                
+                if (!resistance) continue;
+
+                // Calculate voltage drop
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * current * impedance * distance / 1000) :
+                    (2 * current * resistance * distance / 1000);
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+                if (voltageDropPercent <= maxVD) {
+                    const baseAmpacityFinal = ampacityTable[material][tempRating][size.awg] || size.ampacity;
+                    const deratedAmpacityFinal = baseAmpacityFinal * totalDerating;
+                    
+                    finalSize = {
+                        ...size,
+                        ampacity: Math.round(deratedAmpacityFinal),
+                        baseAmpacity: baseAmpacityFinal,
+                        resistance: resistance,
+                        reactance: reactance,
+                        voltageDrop: voltageDropPercent,
+                        voltageDropVolts: voltageDropVolts,
+                        derating: {
+                            installation: installationFactor,
+                            conductor: conductorFactor,
+                            temperature: tempFactor,
+                            total: totalDerating
+                        },
+                        necCompliant: deratedAmpacityFinal >= ocpd_rating,
+                        complianceIssues: deratedAmpacityFinal >= ocpd_rating ? [] : complianceIssues,
+                        ocpdRating: ocpd_rating,
+                        requiredAmpacity: requiredAmpacity
+                    };
+                    break;
+                }
+            }
+
+            // If no size meets voltage drop requirement, use largest available
+            if (!finalSize.voltageDrop) {
+                const largestSize = wireSizes[wireSizes.length - 1];
+                const resistance = wireResistance[material][largestSize.awg];
+                const reactance = wireReactance[largestSize.awg];
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * current * impedance * distance / 1000) :
+                    (2 * current * resistance * distance / 1000);
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+                const baseAmpacityFinal = ampacityTable[material][tempRating][largestSize.awg] || largestSize.ampacity;
+                const deratedAmpacityFinal = baseAmpacityFinal * totalDerating;
+
+                finalSize = {
+                    ...largestSize,
+                    ampacity: Math.round(deratedAmpacityFinal),
+                    baseAmpacity: baseAmpacityFinal,
+                    resistance: resistance,
+                    reactance: reactance,
+                    voltageDrop: voltageDropPercent,
+                    voltageDropVolts: voltageDropVolts,
+                    derating: {
+                        installation: installationFactor,
+                        conductor: conductorFactor,
+                        temperature: tempFactor,
+                        total: totalDerating
+                    },
+                    necCompliant: deratedAmpacityFinal >= ocpd_rating,
+                    complianceIssues: deratedAmpacityFinal >= ocpd_rating ? [] : complianceIssues,
+                    ocpdRating: ocpd_rating,
+                    requiredAmpacity: requiredAmpacity
+                };
+                
+                if (voltageDropPercent > maxVD) {
+                    finalSize.complianceIssues = [...(finalSize.complianceIssues || []), 
+                        `Voltage drop (${voltageDropPercent.toFixed(2)}%) exceeds limit (${maxVD}%)`];
+                }
+            }
+
+            return {
+                size: `${finalSize.awg} AWG`,
+                ampacity: finalSize.ampacity,
+                baseAmpacity: finalSize.baseAmpacity,
+                resistance: finalSize.resistance,
+                reactance: finalSize.reactance,
+                voltageDrop: finalSize.voltageDrop,
+                voltageDropVolts: finalSize.voltageDropVolts,
+                derating: finalSize.derating,
+                necCompliant: finalSize.necCompliant,
+                complianceIssues: finalSize.complianceIssues || [],
+                ocpdRating: finalSize.ocpdRating,
+                requiredAmpacity: finalSize.requiredAmpacity
+            };
+        }
+
         // Enhanced NEC compliance warning generation
         function generateNECWarnings(ambient_temp, transformer_type, mounting_location, kaic, load_factor, primaryCable, secondaryCable, max_vd_primary, max_vd_secondary, design_standard, nec_compliance) {
             let warnings = '';
@@ -1360,7 +1550,7 @@
 
             // Oil-filled transformer installation warnings (NEC 450.23)
             if (transformer_type === 'oil') {
-                warnings += `<div class="nec-warning-card">
+                let oilWarnings = `<div class="nec-warning-card">
                     <i class="fas fa-exclamation-triangle"></i>
                     <strong>NEC 450.23 Compliance Required:</strong> Oil-immersed transformers require special installation considerations:
                     <ul style="margin-top: 0.5rem; margin-left: 1rem;">
@@ -1370,6 +1560,52 @@
                         <li>Local authority approval may be required</li>
                     </ul>
                 </div>`;
+
+                // Additional specific requirements for pole-mounted oil-immersed transformers
+                if (mounting_location === 'pole_mount') {
+                    oilWarnings += `<div class="nec-warning-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Pole-Mounted Oil-Immersed Transformer - NEC 450.23 & Local Code Compliance:</strong>
+                        <p style="margin-bottom: 0.5rem;"><strong>Critical Installation Requirements:</strong></p>
+                        <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                            <li><strong>Pole Structural Adequacy:</strong> Verify pole can support transformer weight plus wind/ice loading per NESC requirements</li>
+                            <li><strong>Oil Containment/Spill Mitigation:</strong> Install spill containment system or use transformer with integral containment per environmental regulations</li>
+                            <li><strong>Minimum Clearances Above Grade/Structures:</strong> Maintain NEC Table 230.24(A) clearances - minimum 8 feet above rooftops, 12 feet above residential areas</li>
+                            <li><strong>Lightning/Surge Protection:</strong> Install surge arresters on both primary and secondary per IEEE C62.22 standards</li>
+                            <li><strong>Fire Risk/Vegetation Clearance:</strong> Maintain minimum 10-foot clearance from combustible vegetation and structures per local fire codes</li>
+                            <li><strong>Maintenance Access/Inspection:</strong> Ensure safe access for routine maintenance and emergency response per OSHA requirements</li>
+                            <li><strong>Authority Approval:</strong> Obtain permits from local electrical inspector, environmental agency, and utility company before installation</li>
+                        </ul>
+                        <p style="margin-top: 0.5rem; font-weight: bold; color: #e74c3c;">
+                            ⚠️ Consult NEC 450.23, local environmental regulations, and utility standards before proceeding with installation.
+                        </p>
+                    </div>`;
+                }
+                
+                warnings += oilWarnings;
+            }
+
+            // Cable-OCPD compliance warnings
+            if (primaryCable.complianceIssues && primaryCable.complianceIssues.length > 0) {
+                warnings += `<div class="nec-warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Primary Cable NEC Compliance Issues:</strong>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">`;
+                primaryCable.complianceIssues.forEach(issue => {
+                    warnings += `<li>${issue}</li>`;
+                });
+                warnings += `</ul></div>`;
+            }
+
+            if (secondaryCable.complianceIssues && secondaryCable.complianceIssues.length > 0) {
+                warnings += `<div class="nec-warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Secondary Cable NEC Compliance Issues:</strong>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">`;
+                secondaryCable.complianceIssues.forEach(issue => {
+                    warnings += `<li>${issue}</li>`;
+                });
+                warnings += `</ul></div>`;
             }
 
             // High fault current warnings
@@ -1486,25 +1722,29 @@
                 <div class="cable-sizing-section">
                     <h3 style="color: #2c3e50; margin-bottom: 1rem;">
                         <i class="fas fa-plug"></i>
-                        Enhanced Cable Sizing with Derating Analysis
+                        Enhanced Cable Sizing with NEC OCPD Compliance
                     </h3>
                     
                     <div class="cable-result">
-                        <div class="cable-recommendation ${getVoltageDropClass(primaryCable.voltageDrop, max_vd_primary)}">
+                        <div class="cable-recommendation ${getVoltageDropClass(primaryCable.voltageDrop, max_vd_primary)} ${primaryCable.necCompliant ? '' : 'nec-non-compliant'}">
                             <h4><i class="fas fa-arrow-up"></i> Primary Cable</h4>
                             <p><strong>Size:</strong> ${primaryCable.size}</p>
                             <p><strong>Base Ampacity:</strong> ${primaryCable.baseAmpacity} A</p>
                             <p><strong>Derated Ampacity:</strong> ${primaryCable.ampacity} A</p>
+                            <p><strong>OCPD Rating:</strong> ${primaryCable.ocpdRating} A</p>
+                            <p><strong>OCPD Compliance:</strong> ${primaryCable.necCompliant ? '✅ Compliant' : '❌ Non-Compliant'}</p>
                             <p><strong>Derating Factor:</strong> ${(primaryCable.derating.total * 100).toFixed(1)}%</p>
                             <p><strong>Voltage Drop:</strong> ${primaryCable.voltageDrop.toFixed(2)}% (${primaryCable.voltageDropVolts.toFixed(1)}V)</p>
                             <p><strong>Status:</strong> ${getVoltageDropStatus(primaryCable.voltageDrop, max_vd_primary)}</p>
                         </div>
                         
-                        <div class="cable-recommendation ${getVoltageDropClass(secondaryCable.voltageDrop, max_vd_secondary)}">
+                        <div class="cable-recommendation ${getVoltageDropClass(secondaryCable.voltageDrop, max_vd_secondary)} ${secondaryCable.necCompliant ? '' : 'nec-non-compliant'}">
                             <h4><i class="fas fa-arrow-down"></i> Secondary Cable</h4>
                             <p><strong>Size:</strong> ${secondaryCable.size}</p>
                             <p><strong>Base Ampacity:</strong> ${secondaryCable.baseAmpacity} A</p>
                             <p><strong>Derated Ampacity:</strong> ${secondaryCable.ampacity} A</p>
+                            <p><strong>OCPD Rating:</strong> ${secondaryCable.ocpdRating} A</p>
+                            <p><strong>OCPD Compliance:</strong> ${secondaryCable.necCompliant ? '✅ Compliant' : '❌ Non-Compliant'}</p>
                             <p><strong>Derating Factor:</strong> ${(secondaryCable.derating.total * 100).toFixed(1)}%</p>
                             <p><strong>Voltage Drop:</strong> ${secondaryCable.voltageDrop.toFixed(2)}% (${secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
                             <p><strong>Status:</strong> ${getVoltageDropStatus(secondaryCable.voltageDrop, max_vd_secondary)}</p>
@@ -1691,15 +1931,15 @@
                     flc_primary, flc_secondary, transformer_size, design_standard
                 );
 
-                // Enhanced cable sizing with derating factors
-                const primaryCable = calculateEnhancedCableSize(
-                    flc_primary * 1.25, primary_dist_ft, service_voltage, phase, 
+                // Enhanced cable sizing with OCPD compliance checking
+                const primaryCable = calculateEnhancedCableSizeWithOCPD(
+                    flc_primary, primary_ocpd, primary_dist_ft, service_voltage, phase, 
                     conductor_material, insulation_type, installation_method, 
                     loaded_conductors, ambient_temp, max_vd_primary, design_standard
                 );
                 
-                const secondaryCable = calculateEnhancedCableSize(
-                    flc_secondary * 1.25, secondary_dist_ft, load_voltage, phase, 
+                const secondaryCable = calculateEnhancedCableSizeWithOCPD(
+                    flc_secondary, secondary_ocpd, secondary_dist_ft, load_voltage, phase, 
                     conductor_material, insulation_type, installation_method, 
                     loaded_conductors, ambient_temp, max_vd_secondary, design_standard
                 );

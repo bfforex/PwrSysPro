@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PwrSysPro V1.1 - Advanced Transformer Sizing Tool</title>
+    <title>PwrSysPro V1.1 - Advanced LV Transformer Sizing Tool</title>
     <!-- Self-hosted FontAwesome icons using Unicode fallbacks -->
     <style>
         /* FontAwesome Icons CSS - Essential icons only for offline use */
@@ -966,7 +966,7 @@
 
     <footer class="footer">
         <p>© 2024 PwrSysPro Inc. - Professional Electrical Engineering Solutions</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9em;">Advanced Transformer Sizing Tool v1.1 | Enhanced NEC Compliance & Design Standard Support</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9em;">Advanced LV Transformer Sizing Tool v1.1 | NEC, IEC, AS/NZ, CEC  Compliance & Design Standard Support</p>
     </footer>
 
     <!-- Inline jsPDF for PDF generation -->
@@ -2104,7 +2104,7 @@
                 doc.setFontSize(8);
                 doc.setTextColor(128, 128, 128);
                 doc.text(`PwrSysPro v1.1 - Page ${i} of ${pageCount}`, 20, 285);
-                doc.text('© 2024 PwrSysPro Inc. - Professional Electrical Engineering Solutions', 120, 285);
+                doc.text('© 2025 PwrSysPro - Professional Electrical Engineering Solutions', 120, 285);
             }
             
             const fileName = `PwrSysPro_V1.1_${document.getElementById('project_name').value.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`;

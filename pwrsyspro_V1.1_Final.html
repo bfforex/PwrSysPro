@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PwrSysPro V1.1 - Advanced Transformer Sizing Tool</title>
+    <!-- Self-hosted FontAwesome icons using Unicode fallbacks -->
+    <style>
+        /* FontAwesome Icons CSS - Essential icons only for offline use */
+        .fas, .fa {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-weight: 900;
+            font-style: normal;
+            display: inline-block;
+            text-rendering: auto;
+        }
+        
+        /* Icon mappings using Unicode symbols as fallbacks */
+        .fa-bolt::before { content: '⚡'; }
+        .fa-cogs::before { content: '⚙'; }
+        .fa-file::before { content: '📄'; }
+        .fa-save::before { content: '💾'; }
+        .fa-folder-open::before { content: '📂'; }
+        .fa-calculator::before { content: '🧮'; }
+        .fa-chart-line::before { content: '📈'; }
+        .fa-plug::before { content: '🔌'; }
+        .fa-wave-square::before { content: '〰'; }
+        .fa-sitemap::before { content: '🗂'; }
+        .fa-industry::before { content: '🏭'; }
+        .fa-home::before { content: '🏠'; }
+        .fa-ruler::before { content: '📏'; }
+        .fa-arrows-alt-h::before { content: '↔'; }
+        .fa-ruler-combined::before { content: '📐'; }
+        .fa-thermometer-half::before { content: '🌡'; }
+        .fa-percentage::before { content: '%'; }
+        .fa-info-circle::before { content: 'ⓘ'; }
+        .fa-tools::before { content: '🔧'; }
+        .fa-atom::before { content: '⚛'; }
+        .fa-shield-alt::before { content: '🛡'; }
+        .fa-wrench::before { content: '🔧'; }
+        .fa-layer-group::before { content: '▤'; }
+        .fa-book::before { content: '📖'; }
+        .fa-box::before { content: '📦'; }
+        .fa-map-marker-alt::before { content: '📍'; }
+        .fa-clock::before { content: '🕐'; }
+        .fa-percent::before { content: '%'; }
+        .fa-tachometer-alt::before { content: '📊'; }
+        .fa-exclamation-triangle::before { content: '⚠'; }
+        .fa-leaf::before { content: '🌿'; }
+        .fa-eye::before { content: '👁'; }
+        .fa-eye-slash::before { content: '🙈'; }
+        .fa-file-pdf::before { content: '📄'; }
+        .fa-arrow-up::before { content: '↑'; }
+        .fa-arrow-down::before { content: '↓'; }
+        .fa-thermometer-full::before { content: '🌡'; }
+        .fa-times::before { content: '✕'; }
+        .fa-trash::before { content: '🗑'; }
+        .fa-tag::before { content: '🏷'; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .project-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-load {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-new {
+            background: #6c757d;
+            color: white;
+        }
+
+        .project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .version-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            margin-top: 1rem;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 120px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .results-content {
+            display: none;
+        }
+
+        .results-content.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-title {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .voltage-drop-card {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            border-left: 4px solid #28a745;
+        }
+
+        .voltage-drop-warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left: 4px solid #ffc107;
+        }
+
+        .voltage-drop-critical {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-left: 4px solid #dc3545;
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-left: 4px solid #ffc107;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .nec-compliance-card {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            border-left: 4px solid #28a745;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .nec-warning-card {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-left: 4px solid #dc3545;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .calculation-steps {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .calculation-steps.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .step {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-left: 3px solid #667eea;
+            padding-left: 1rem;
+        }
+
+        .toggle-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-indicator {
+            width: 100%;
+            height: 6px;
+            background: #e1e8ed;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .project-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+
+        .project-item {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .project-info {
+            flex: 1;
+        }
+
+        .project-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .project-date {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .footer {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            margin-top: 3rem;
+        }
+
+        .cable-sizing-section {
+            background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+            border: 1px solid #4a90e2;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .cable-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .cable-recommendation {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .info-tooltip {
+            cursor: help;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .info-tooltip:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .cable-result {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="logo-text">PwrSysPro</div>
+                    <div style="color: #6c757d; font-size: 14px;">Advanced Transformer Sizing</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="project-btn btn-new" onclick="newProject()">
+                    <i class="fas fa-file"></i>
+                    New
+                </button>
+                <button class="project-btn btn-save" onclick="saveProject()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+                <button class="project-btn btn-load" onclick="showLoadModal()">
+                    <i class="fas fa-folder-open"></i>
+                    Load
+                </button>
+                <div class="version-badge">v1.1 Pro</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-grid">
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    System Configuration
+                </h2>
+                
+                <div class="progress-indicator">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+
+                <form id="sizingForm">
+                    <div class="input-group full-width">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-tag"></i>
+                                Project Name
+                            </label>
+                            <input type="text" id="project_name" placeholder="Enter project name" value="Untitled Project">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-plug"></i>
+                                Total Load (kW)
+                                <i class="fas fa-info-circle info-tooltip" title="Total connected load in kilowatts"></i>
+                            </label>
+                            <input type="number" id="load_kw" required step="0.1" min="0.1">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-wave-square"></i>
+                                Power Factor
+                                <i class="fas fa-info-circle info-tooltip" title="Ratio of real power to apparent power (0.1-1.0)"></i>
+                            </label>
+                            <input type="number" id="power_factor" required step="0.01" min="0.1" max="1.0" value="0.85">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-bolt"></i>
+                                Load Voltage (V)
+                            </label>
+                            <select id="load_voltage" onchange="handleCustomVoltage('load_voltage')">
+                                <option value="120">120V</option>
+                                <option value="208">208V</option>
+                                <option value="240">240V</option>
+                                <option value="277">277V</option>
+                                <option value="480" selected>480V</option>
+                                <option value="600">600V</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="number" id="custom_load_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage" onchange="updateProgress()">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-sitemap"></i>
+                                Phase Type
+                            </label>
+                            <select id="phase_type" onchange="updateProgress()">
+                                <option value="single">Single-phase</option>
+                                <option value="three" selected>Three-phase</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-industry"></i>
+                                Load Type
+                            </label>
+                            <select id="load_type" onchange="updateProgress()">
+                                <option value="continuous" selected>Continuous</option>
+                                <option value="motor">Motor Load</option>
+                                <option value="mixed">Mixed Load</option>
+                                <option value="lighting">Lighting</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-home"></i>
+                                Service Voltage (V)
+                            </label>
+                            <select id="service_voltage" onchange="handleCustomVoltage('service_voltage')">
+                                <option value="4160">4.16 kV</option>
+                                <option value="12470" selected>12.47 kV</option>
+                                <option value="13800">13.8 kV</option>
+                                <option value="25000">25 kV</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="number" id="custom_service_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem 0; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-ruler"></i>
+                        Distance & Environmental
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                Primary Distance
+                            </label>
+                            <input type="number" id="primary_distance" required min="0" value="100" onchange="updateProgress()">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                Secondary Distance
+                            </label>
+                            <input type="number" id="secondary_distance" required min="0" value="50" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-ruler-combined"></i>
+                                Distance Unit
+                            </label>
+                            <select id="distance_unit" onchange="updateProgress()">
+                                <option value="feet" selected>Feet</option>
+                                <option value="meters">Meters</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-thermometer-half"></i>
+                                Ambient Temperature (°C)
+                            </label>
+                            <input type="number" id="ambient_temp" required value="40" min="-40" max="60" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-percentage"></i>
+                                Max Voltage Drop - Primary (%)
+                                <i class="fas fa-info-circle info-tooltip" title="Maximum allowable voltage drop for primary conductors (NEC: 3%)"></i>
+                            </label>
+                            <input type="number" id="max_vd_primary" step="0.1" min="0.1" max="10" value="3.0" onchange="updateProgress()">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-percentage"></i>
+                                Max Voltage Drop - Secondary (%)
+                                <i class="fas fa-info-circle info-tooltip" title="Maximum allowable voltage drop for secondary conductors (NEC: 5%)"></i>
+                            </label>
+                            <input type="number" id="max_vd_secondary" step="0.1" min="0.1" max="10" value="5.0" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem 0; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-tools"></i>
+                        Technical Specifications
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-atom"></i>
+                                Conductor Material
+                            </label>
+                            <select id="conductor_material" onchange="updateProgress()">
+                                <option value="copper" selected>Copper</option>
+                                <option value="aluminum">Aluminum</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-shield-alt"></i>
+                                Insulation Type
+                            </label>
+                            <select id="insulation_type" onchange="updateProgress()">
+                                <option value="THHN" selected>THHN (90°C)</option>
+                                <option value="XHHW">XHHW (90°C)</option>
+                                <option value="XLPE">XLPE (90°C)</option>
+                                <option value="PVC">PVC (60°C)</option>
+                                <option value="EPR">EPR (75°C)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-wrench"></i>
+                                Installation Method
+                            </label>
+                            <select id="installation_method" onchange="updateProgress()">
+                                <option value="conduit" selected>Conduit</option>
+                                <option value="tray">Cable Tray</option>
+                                <option value="buried">Direct Buried</option>
+                                <option value="overhead">Overhead</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Loaded Conductors
+                            </label>
+                            <input type="number" id="loaded_conductors" required min="1" max="10" value="3" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-book"></i>
+                                Design Standard
+                            </label>
+                            <select id="design_standard" onchange="updateProgress()">
+                                <option value="NEC" selected>NEC (USA)</option>
+                                <option value="IEC">IEC (International)</option>
+                                <option value="AS/NZS">AS/NZS (Australia/NZ)</option>
+                                <option value="CEC">CEC (Canada)</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-box"></i>
+                                Transformer Type
+                            </label>
+                            <select id="transformer_type" onchange="updateProgress()">
+                                <option value="dry" selected>Dry-type</option>
+                                <option value="oil">Oil-immersed</option>
+                                <option value="isolation">Isolation</option>
+                                <option value="auto">Auto-transformer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-map-marker-alt"></i>
+                                Mounting Location
+                            </label>
+                            <select id="mounting_location" onchange="updateProgress()">
+                                <option value="indoor" selected>Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="pad_mount">Pad Mount</option>
+                                <option value="vault">Vault</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-clock"></i>
+                                Short Circuit Duration (s)
+                                <i class="fas fa-info-circle info-tooltip" title="Duration for short circuit withstand capability"></i>
+                            </label>
+                            <input type="number" id="short_circuit_duration" required step="0.01" min="0.01" value="0.5" onchange="updateProgress()">
+                        </div>
+                    </div>
+
+                    <button type="button" class="calculate-btn" onclick="calculateSizing()">
+                        <i class="fas fa-calculator"></i>
+                        Calculate Transformer Sizing
+                    </button>
+                </form>
+            </div>
+
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Results & Analysis
+                </h2>
+                
+                <div id="placeholder" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    <i class="fas fa-calculator" style="font-size: 48px; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Enter your system parameters and click calculate to see results</p>
+                </div>
+
+                <div class="results-content" id="results"></div>
+                
+                <div class="action-buttons" id="actionButtons" style="display: none;">
+                    <button type="button" class="btn btn-secondary toggle-btn" onclick="toggleCalculation()">
+                        <i class="fas fa-eye"></i>
+                        Show Calculations
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="generatePDF()">
+                        <i class="fas fa-file-pdf"></i>
+                        Export PDF
+                    </button>
+                </div>
+
+                <div class="calculation-steps" id="calculation"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Management Modals -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSaveModal()">&times;</span>
+            <h2><i class="fas fa-save"></i> Save Project</h2>
+            <div class="form-field">
+                <label>Project Name</label>
+                <input type="text" id="saveProjectName" placeholder="Enter project name">
+            </div>
+            <div class="form-field" style="margin-top: 1rem;">
+                <label>Description (Optional)</label>
+                <textarea id="saveProjectDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Enter project description"></textarea>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="confirmSaveProject()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn btn-secondary" onclick="closeSaveModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoadModal()">&times;</span>
+            <h2><i class="fas fa-folder-open"></i> Load Project</h2>
+            <div class="project-list" id="projectList">
+                <p style="text-align: center; color: #6c757d; padding: 2rem;">No saved projects found</p>
+            </div>
+            <div style="margin-top: 1rem;">
+                <button class="btn btn-secondary" onclick="closeLoadModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2024 PwrSysPro Inc. - Professional Electrical Engineering Solutions</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9em;">Advanced Transformer Sizing Tool v1.1 | Enhanced NEC Compliance & Design Standard Support</p>
+    </footer>
+
+    <!-- Inline jsPDF for PDF generation -->
+    <script>
+        // Simplified jsPDF implementation for offline use
+        window.jspdf = {
+            jsPDF: function() {
+                return {
+                    setFontSize: function(size) {},
+                    setTextColor: function(r, g, b) {},
+                    text: function(text, x, y) {},
+                    addPage: function() {},
+                    setPage: function(page) {},
+                    internal: {
+                        getNumberOfPages: function() { return 1; }
+                    },
+                    save: function(filename) {
+                        // Fallback: create a text file with the data
+                        const element = document.createElement('a');
+                        const content = document.getElementById('results').innerText + '\n\n' + 
+                                       (document.getElementById('calculation').classList.contains('show') ? 
+                                        document.getElementById('calculation').innerText : '');
+                        const file = new Blob([content], { type: 'text/plain' });
+                        element.href = URL.createObjectURL(file);
+                        element.download = filename.replace('.pdf', '.txt');
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                    }
+                };
+            }
+        };
+    </script>
+
+    <script>
+        // Global variables
+        let currentProject = {
+            name: 'Untitled Project',
+            data: {},
+            lastModified: new Date()
+        };
+
+        // Enhanced wire resistance data (ohms per 1000 feet at 75°C)
+        const wireResistance = {
+            copper: {
+                '14': 3.07, '12': 1.93, '10': 1.21, '8': 0.764, '6': 0.491, '4': 0.308,
+                '3': 0.245, '2': 0.194, '1': 0.154, '1/0': 0.122, '2/0': 0.0967,
+                '3/0': 0.0766, '4/0': 0.0608, '250': 0.0515, '300': 0.0429,
+                '350': 0.0367, '400': 0.0321, '500': 0.0258, '600': 0.0214,
+                '700': 0.0184, '750': 0.0171, '800': 0.0161, '900': 0.0143,
+                '1000': 0.0129
+            },
+            aluminum: {
+                '12': 3.18, '10': 2.00, '8': 1.26, '6': 0.808, '4': 0.508,
+                '3': 0.403, '2': 0.319, '1': 0.253, '1/0': 0.201, '2/0': 0.159,
+                '3/0': 0.126, '4/0': 0.100, '250': 0.0847, '300': 0.0706,
+                '350': 0.0605, '400': 0.0529, '500': 0.0424, '600': 0.0353,
+                '700': 0.0302, '750': 0.0282, '800': 0.0265, '900': 0.0235,
+                '1000': 0.0212
+            }
+        };
+
+        // Wire reactance data (ohms per 1000 feet)
+        const wireReactance = {
+            '14': 0.058, '12': 0.057, '10': 0.055, '8': 0.052, '6': 0.051,
+            '4': 0.048, '3': 0.047, '2': 0.046, '1': 0.045, '1/0': 0.044,
+            '2/0': 0.043, '3/0': 0.042, '4/0': 0.041, '250': 0.041,
+            '300': 0.040, '350': 0.040, '400': 0.039, '500': 0.039,
+            '600': 0.038, '700': 0.038, '750': 0.037, '800': 0.037,
+            '900': 0.037, '1000': 0.036
+        };
+
+        // Enhanced ampacity tables with derating factors
+        const ampacityTable = {
+            copper: {
+                '60C': { '14': 20, '12': 25, '10': 30, '8': 40, '6': 55, '4': 70, '3': 85, '2': 95, '1': 110, '1/0': 125, '2/0': 145, '3/0': 165, '4/0': 195 },
+                '75C': { '14': 20, '12': 25, '10': 35, '8': 50, '6': 65, '4': 85, '3': 100, '2': 115, '1': 130, '1/0': 150, '2/0': 175, '3/0': 200, '4/0': 230 },
+                '90C': { '14': 25, '12': 30, '10': 40, '8': 55, '6': 75, '4': 95, '3': 115, '2': 130, '1': 150, '1/0': 170, '2/0': 195, '3/0': 225, '4/0': 260 }
+            },
+            aluminum: {
+                '60C': { '12': 20, '10': 25, '8': 30, '6': 40, '4': 55, '3': 65, '2': 75, '1': 85, '1/0': 100, '2/0': 115, '3/0': 130, '4/0': 155 },
+                '75C': { '12': 25, '10': 30, '8': 40, '6': 50, '4': 65, '3': 75, '2': 90, '1': 100, '1/0': 120, '2/0': 135, '3/0': 155, '4/0': 180 },
+                '90C': { '12': 30, '10': 35, '8': 45, '6': 60, '4': 75, '3': 85, '2': 100, '1': 115, '1/0': 135, '2/0': 150, '3/0': 175, '4/0': 205 }
+            }
+        };
+
+        // Installation method derating factors
+        const installationDerating = {
+            'conduit': 1.0,
+            'tray': 0.95,
+            'buried': 0.90,
+            'overhead': 1.0
+        };
+
+        // Conductor count derating factors (NEC Table 310.15(B)(3)(a))
+        const conductorDerating = {
+            1: 1.0, 2: 1.0, 3: 1.0,
+            4: 0.8, 5: 0.8, 6: 0.8,
+            7: 0.7, 8: 0.7, 9: 0.7,
+            10: 0.7
+        };
+
+        // Temperature rating mappings
+        const temperatureRatings = {
+            'THHN': '90C',
+            'XHHW': '90C', 
+            'XLPE': '90C',
+            'PVC': '60C',
+            'EPR': '75C'
+        };
+
+        // Progressive form filling indicator
+        function updateProgress() {
+            const form = document.getElementById('sizingForm');
+            const inputs = form.querySelectorAll('input[required], select');
+            let filledCount = 0;
+            
+            inputs.forEach(input => {
+                if (input.value && input.value.trim() !== '') {
+                    filledCount++;
+                }
+            });
+            
+            const progress = (filledCount / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Handle custom voltage inputs
+        function handleCustomVoltage(elementId) {
+            const select = document.getElementById(elementId);
+            const customInput = document.getElementById('custom_' + elementId);
+            
+            if (select.value === 'custom') {
+                customInput.style.display = 'block';
+                customInput.required = true;
+            } else {
+                customInput.style.display = 'none';
+                customInput.required = false;
+                customInput.value = '';
+            }
+            updateProgress();
+        }
+
+        // Get load safety factor based on design standard
+        function getLoadSafetyFactor(load_type, design_standard) {
+            const factors = {
+                'NEC': {
+                    'motor': 1.25,
+                    'mixed': 1.15,
+                    'lighting': 1.1,
+                    'continuous': 1.0
+                },
+                'IEC': {
+                    'motor': 1.2,
+                    'mixed': 1.1,
+                    'lighting': 1.05,
+                    'continuous': 1.0
+                },
+                'AS/NZS': {
+                    'motor': 1.3,
+                    'mixed': 1.2,
+                    'lighting': 1.1,
+                    'continuous': 1.0
+                },
+                'CEC': {
+                    'motor': 1.25,
+                    'mixed': 1.15,
+                    'lighting': 1.1,
+                    'continuous': 1.0
+                }
+            };
+            return factors[design_standard][load_type] || 1.0;
+        }
+
+        // Get temperature derating based on design standard
+        function getTemperatureDerating(ambient_temp, design_standard) {
+            const baseTemp = design_standard === 'IEC' ? 20 : 40;
+            if (ambient_temp > baseTemp) {
+                const factor = design_standard === 'IEC' ? 0.008 : 0.01;
+                return 1 + (ambient_temp - baseTemp) * factor;
+            }
+            return 1.0;
+        }
+
+        // Get standard transformer sizes based on design standard
+        function getStandardSizes(design_standard) {
+            const standards = {
+                'NEC': [15, 30, 45, 75, 112.5, 150, 225, 300, 500, 750, 1000, 1500, 2000, 2500, 3000, 5000],
+                'IEC': [16, 25, 40, 63, 100, 160, 250, 400, 630, 1000, 1600, 2500, 4000, 6300],
+                'AS/NZS': [15, 30, 45, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 2500],
+                'CEC': [15, 30, 45, 75, 112.5, 150, 225, 300, 500, 750, 1000, 1500, 2000, 2500, 3000]
+            };
+            return standards[design_standard] || standards['NEC'];
+        }
+
+        // Get transformer impedance
+        function getTransformerImpedance(transformer_size, transformer_type, design_standard) {
+            let impedance;
+            if (transformer_type === 'dry') {
+                impedance = transformer_size <= 75 ? 4 : transformer_size <= 150 ? 5 : transformer_size <= 500 ? 5.75 : 6.5;
+            } else {
+                impedance = transformer_size <= 75 ? 3.5 : transformer_size <= 150 ? 4.5 : transformer_size <= 500 ? 5.5 : 6;
+            }
+            
+            // Adjust for design standard
+            if (design_standard === 'IEC') impedance *= 0.95;
+            else if (design_standard === 'AS/NZS') impedance *= 1.05;
+            
+            return impedance;
+        }
+
+        // Enhanced NEC-compliant OCPD calculation (NEC 450.3(B))
+        function calculateOCPDWithNEC(flc_primary, flc_secondary, transformer_size, design_standard) {
+            let primary_ocpd, secondary_ocpd;
+            let nec_compliance = { primary: true, secondary: true, messages: [] };
+            
+            if (design_standard === 'NEC') {
+                // NEC 450.3(B) compliant secondary OCPD calculation
+                if (transformer_size <= 9) {
+                    // ≤9 kVA: Maximum 167% of FLC
+                    const max_secondary = flc_secondary * 1.67;
+                    secondary_ocpd = getNextStandardOCPD(max_secondary);
+                    
+                    if (secondary_ocpd > max_secondary) {
+                        nec_compliance.secondary = false;
+                        nec_compliance.messages.push(`Secondary OCPD exceeds NEC 450.3(B) limit for ≤9kVA transformers (167% of FLC)`);
+                    }
+                } else {
+                    // >9 kVA: Maximum 125% of FLC with next standard size selection
+                    const calculated_secondary = flc_secondary * 1.25;
+                    secondary_ocpd = getNextStandardOCPD(calculated_secondary);
+                    
+                    // For >9kVA, can use next standard size if exact size doesn't exist
+                    const max_allowed = flc_secondary * 1.25;
+                    if (secondary_ocpd > max_allowed * 1.1) { // Allow 10% tolerance for standard sizes
+                        nec_compliance.secondary = false;
+                        nec_compliance.messages.push(`Secondary OCPD significantly exceeds NEC 450.3(B) limit for >9kVA transformers (125% of FLC)`);
+                    }
+                }
+                
+                // Primary OCPD per NEC 450.3(A)
+                primary_ocpd = getNextStandardOCPD(flc_primary * 1.25);
+            } else {
+                // Other standards - use 1.25 factor
+                primary_ocpd = getNextStandardOCPD(flc_primary * 1.25);
+                secondary_ocpd = getNextStandardOCPD(flc_secondary * 1.25);
+            }
+            
+            return { primary_ocpd, secondary_ocpd, nec_compliance };
+        }
+
+        // Get next standard OCPD size
+        function getNextStandardOCPD(current) {
+            const standard_ocpd = [15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 600, 700, 800, 1000, 1200, 1600, 2000, 2500, 3000, 4000, 5000, 6000];
+            return standard_ocpd.find(size => size >= current) || Math.ceil(current / 100) * 100;
+        }
+
+        // Enhanced cable sizing with all derating factors
+        function calculateEnhancedCableSize(current, distance, voltage, phase, material, insulation, installation, conductors, ambient_temp, maxVD, design_standard) {
+            const wireSizes = [
+                {awg: '14', ampacity: 20}, {awg: '12', ampacity: 25}, {awg: '10', ampacity: 35},
+                {awg: '8', ampacity: 50}, {awg: '6', ampacity: 65}, {awg: '4', ampacity: 85},
+                {awg: '3', ampacity: 100}, {awg: '2', ampacity: 115}, {awg: '1', ampacity: 130},
+                {awg: '1/0', ampacity: 150}, {awg: '2/0', ampacity: 175}, {awg: '3/0', ampacity: 200},
+                {awg: '4/0', ampacity: 230}, {awg: '250', ampacity: 255}, {awg: '300', ampacity: 285},
+                {awg: '350', ampacity: 310}, {awg: '400', ampacity: 335}, {awg: '500', ampacity: 380},
+                {awg: '600', ampacity: 420}, {awg: '700', ampacity: 460}, {awg: '750', ampacity: 475},
+                {awg: '800', ampacity: 490}, {awg: '900', ampacity: 520}, {awg: '1000', ampacity: 545}
+            ];
+
+            // Get temperature rating and apply derating factors
+            const tempRating = temperatureRatings[insulation] || '75C';
+            const installationFactor = installationDerating[installation] || 1.0;
+            const conductorFactor = conductorDerating[Math.min(conductors, 10)] || 0.7;
+            
+            // Temperature derating for ambient temperature
+            let tempFactor = 1.0;
+            if (ambient_temp > 30) {
+                const tempDerating = {
+                    '60C': { 40: 0.88, 50: 0.75, 60: 0.58 },
+                    '75C': { 40: 0.91, 50: 0.82, 60: 0.71 },
+                    '90C': { 40: 0.94, 50: 0.87, 60: 0.76 }
+                };
+                
+                const closest_temp = ambient_temp <= 40 ? 40 : ambient_temp <= 50 ? 50 : 60;
+                tempFactor = tempDerating[tempRating][closest_temp] || 0.6;
+            }
+
+            // Total derating factor
+            const totalDerating = installationFactor * conductorFactor * tempFactor;
+            const adjustedCurrent = current / totalDerating;
+
+            // Find minimum size for adjusted ampacity
+            let selectedSize = wireSizes.find(size => {
+                const baseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
+                return baseAmpacity >= adjustedCurrent;
+            });
+            
+            if (!selectedSize) selectedSize = wireSizes[wireSizes.length - 1];
+
+            // Check voltage drop and upsize if necessary
+            let finalSize = selectedSize;
+            for (let i = wireSizes.indexOf(selectedSize); i < wireSizes.length; i++) {
+                const size = wireSizes[i];
+                const resistance = wireResistance[material][size.awg];
+                const reactance = wireReactance[size.awg];
+                
+                if (!resistance) continue;
+
+                // Calculate voltage drop
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * current * impedance * distance / 1000) :
+                    (2 * current * resistance * distance / 1000);
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+                if (voltageDropPercent <= maxVD) {
+                    const baseAmpacity = ampacityTable[material][tempRating][size.awg] || size.ampacity;
+                    finalSize = {
+                        ...size,
+                        ampacity: Math.round(baseAmpacity * totalDerating),
+                        baseAmpacity: baseAmpacity,
+                        resistance: resistance,
+                        reactance: reactance,
+                        voltageDrop: voltageDropPercent,
+                        voltageDropVolts: voltageDropVolts,
+                        derating: {
+                            installation: installationFactor,
+                            conductor: conductorFactor,
+                            temperature: tempFactor,
+                            total: totalDerating
+                        }
+                    };
+                    break;
+                }
+            }
+
+            // If no size meets voltage drop requirement, use largest available
+            if (!finalSize.voltageDrop) {
+                const largestSize = wireSizes[wireSizes.length - 1];
+                const resistance = wireResistance[material][largestSize.awg];
+                const reactance = wireReactance[largestSize.awg];
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * current * impedance * distance / 1000) :
+                    (2 * current * resistance * distance / 1000);
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+                const baseAmpacity = ampacityTable[material][tempRating][largestSize.awg] || largestSize.ampacity;
+
+                finalSize = {
+                    ...largestSize,
+                    ampacity: Math.round(baseAmpacity * totalDerating),
+                    baseAmpacity: baseAmpacity,
+                    resistance: resistance,
+                    reactance: reactance,
+                    voltageDrop: voltageDropPercent,
+                    voltageDropVolts: voltageDropVolts,
+                    derating: {
+                        installation: installationFactor,
+                        conductor: conductorFactor,
+                        temperature: tempFactor,
+                        total: totalDerating
+                    }
+                };
+            }
+
+            return {
+                size: `${finalSize.awg} AWG`,
+                ampacity: finalSize.ampacity,
+                baseAmpacity: finalSize.baseAmpacity,
+                resistance: finalSize.resistance,
+                reactance: finalSize.reactance,
+                voltageDrop: finalSize.voltageDrop,
+                voltageDropVolts: finalSize.voltageDropVolts,
+                derating: finalSize.derating
+            };
+        }
+
+        // Enhanced NEC compliance warning generation
+        function generateNECWarnings(ambient_temp, transformer_type, mounting_location, kaic, load_factor, primaryCable, secondaryCable, max_vd_primary, max_vd_secondary, design_standard, nec_compliance) {
+            let warnings = '';
+
+            // Temperature rating verification (NEC requirement)
+            if (ambient_temp > 40) {
+                warnings += `<div class="nec-warning-card">
+                    <i class="fas fa-thermometer-full"></i>
+                    <strong>NEC Temperature Warning:</strong> Ambient temperature (${ambient_temp}°C) exceeds 40°C. 
+                    Additional temperature derating is required per NEC 310.15(B)(2). Consider using higher temperature rated conductors or increased conductor size.
+                </div>`;
+            }
+
+            // Oil-filled transformer installation warnings (NEC 450.23)
+            if (transformer_type === 'oil') {
+                warnings += `<div class="nec-warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>NEC 450.23 Compliance Required:</strong> Oil-immersed transformers require special installation considerations:
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Adequate fire protection and containment</li>
+                        <li>Proper ventilation and clearances</li>
+                        <li>Environmental protection measures</li>
+                        <li>Local authority approval may be required</li>
+                    </ul>
+                </div>`;
+            }
+
+            // High fault current warnings
+            if (kaic > 65) {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>High Fault Current:</strong> KAIC rating of ${kaic}kA detected. Engineering analysis required for:
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Primary system fault current contribution</li>
+                        <li>Current-limiting protection devices</li>
+                        <li>Arc flash hazard analysis</li>
+                        <li>Equipment withstand ratings</li>
+                    </ul>
+                </div>`;
+            }
+
+            // Low loading factor warnings
+            if (load_factor < 0.3) {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Low Loading Factor:</strong> Loading factor of ${(load_factor * 100).toFixed(1)}% is below optimal range. 
+                    Consider a smaller transformer for better efficiency and cost optimization.
+                </div>`;
+            }
+
+            // Voltage drop warnings
+            if (primaryCable.voltageDrop > max_vd_primary) {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Primary Voltage Drop Exceeded:</strong> ${primaryCable.voltageDrop.toFixed(2)}% exceeds maximum limit (${max_vd_primary}%). 
+                    Consider larger cable size or reduced distance.
+                </div>`;
+            }
+
+            if (secondaryCable.voltageDrop > max_vd_secondary) {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Secondary Voltage Drop Exceeded:</strong> ${secondaryCable.voltageDrop.toFixed(2)}% exceeds maximum limit (${max_vd_secondary}%). 
+                    Consider larger cable size or reduced distance.
+                </div>`;
+            }
+
+            // NEC OCPD compliance messages
+            if (!nec_compliance.primary || !nec_compliance.secondary) {
+                nec_compliance.messages.forEach(message => {
+                    warnings += `<div class="nec-warning-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>NEC 450.3(B) Compliance Issue:</strong> ${message}
+                    </div>`;
+                });
+            } else if (design_standard === 'NEC') {
+                warnings += `<div class="nec-compliance-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <strong>NEC 450.3(B) Compliance:</strong> Secondary OCPD sizing meets NEC requirements for transformer protection.
+                </div>`;
+            }
+
+            return warnings;
+        }
+
+        // Enhanced results display
+        function displayEnhancedResults(transformer_size, transformer_impedance, flc_primary, flc_secondary, primary_ocpd, secondary_ocpd, fault_current, kaic, efficiency, primaryCable, secondaryCable, load_kw, warnings, nec_compliance) {
+            const results = `
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-bolt"></i>
+                        Recommended Transformer Size
+                    </div>
+                    <div class="result-value">${transformer_size} kVA</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-percent"></i>
+                        Transformer Impedance
+                    </div>
+                    <div class="result-value">${transformer_impedance}%</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Full Load Current
+                    </div>
+                    <div class="result-value">
+                        Primary: ${flc_primary.toFixed(2)} A<br>
+                        Secondary: ${flc_secondary.toFixed(2)} A
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Fault Current & KAIC Rating
+                    </div>
+                    <div class="result-value">
+                        Fault Current: ${fault_current.toFixed(0)} A<br>
+                        KAIC Rating: ${kaic} kA
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Enhanced OCPD Protection
+                    </div>
+                    <div class="result-value">
+                        Primary OCPD: ${primary_ocpd} A<br>
+                        Secondary OCPD: ${secondary_ocpd} A ${nec_compliance.secondary ? '✓' : '⚠'}<br>
+                        <small>${nec_compliance.secondary ? 'NEC 450.3(B) Compliant' : 'Review NEC Compliance'}</small>
+                    </div>
+                </div>
+                
+                <div class="cable-sizing-section">
+                    <h3 style="color: #2c3e50; margin-bottom: 1rem;">
+                        <i class="fas fa-plug"></i>
+                        Enhanced Cable Sizing with Derating Analysis
+                    </h3>
+                    
+                    <div class="cable-result">
+                        <div class="cable-recommendation ${getVoltageDropClass(primaryCable.voltageDrop, max_vd_primary)}">
+                            <h4><i class="fas fa-arrow-up"></i> Primary Cable</h4>
+                            <p><strong>Size:</strong> ${primaryCable.size}</p>
+                            <p><strong>Base Ampacity:</strong> ${primaryCable.baseAmpacity} A</p>
+                            <p><strong>Derated Ampacity:</strong> ${primaryCable.ampacity} A</p>
+                            <p><strong>Derating Factor:</strong> ${(primaryCable.derating.total * 100).toFixed(1)}%</p>
+                            <p><strong>Voltage Drop:</strong> ${primaryCable.voltageDrop.toFixed(2)}% (${primaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                            <p><strong>Status:</strong> ${getVoltageDropStatus(primaryCable.voltageDrop, max_vd_primary)}</p>
+                        </div>
+                        
+                        <div class="cable-recommendation ${getVoltageDropClass(secondaryCable.voltageDrop, max_vd_secondary)}">
+                            <h4><i class="fas fa-arrow-down"></i> Secondary Cable</h4>
+                            <p><strong>Size:</strong> ${secondaryCable.size}</p>
+                            <p><strong>Base Ampacity:</strong> ${secondaryCable.baseAmpacity} A</p>
+                            <p><strong>Derated Ampacity:</strong> ${secondaryCable.ampacity} A</p>
+                            <p><strong>Derating Factor:</strong> ${(secondaryCable.derating.total * 100).toFixed(1)}%</p>
+                            <p><strong>Voltage Drop:</strong> ${secondaryCable.voltageDrop.toFixed(2)}% (${secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                            <p><strong>Status:</strong> ${getVoltageDropStatus(secondaryCable.voltageDrop, max_vd_secondary)}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-leaf"></i>
+                        Efficiency & Loading
+                    </div>
+                    <div class="result-value">
+                        Efficiency: ${efficiency.toFixed(1)}%<br>
+                        Load Factor: ${(load_kw / transformer_size * 100).toFixed(1)}%
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('results').innerHTML = warnings + results;
+            document.getElementById('results').classList.add('show');
+            document.getElementById('actionButtons').style.display = 'flex';
+        }
+
+        // Enhanced calculation steps
+        function generateEnhancedCalculationSteps(load_kw, pf, load_type, safety_factor, base_kva, ambient_temp, temp_factor, kva, transformer_size, phase, service_voltage, load_voltage, flc_primary, flc_secondary, transformer_impedance, fault_current, kaic, primary_ocpd, secondary_ocpd, efficiency, primaryCable, secondaryCable, primary_dist_ft, secondary_dist_ft, conductor_material, insulation_type, installation_method, loaded_conductors, design_standard) {
+            const calc = `
+                <h3 style="margin-bottom: 1rem; color: #2c3e50;">
+                    <i class="fas fa-calculator"></i>
+                    Enhanced Step-by-Step Calculations (${design_standard} Standard)
+                </h3>
+                
+                <div class="step">
+                    <strong>1. Base kVA Calculation:</strong><br>
+                    Base kVA = Load (kW) ÷ Power Factor<br>
+                    Base kVA = ${load_kw} ÷ ${pf} = ${(load_kw / pf).toFixed(2)} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>2. Safety Factor Application (${design_standard}):</strong><br>
+                    Load Type: ${load_type} (Safety Factor: ${safety_factor})<br>
+                    Adjusted kVA = ${(load_kw / pf).toFixed(2)} × ${safety_factor} = ${base_kva.toFixed(2)} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>3. Temperature Derating:</strong><br>
+                    Ambient Temperature: ${ambient_temp}°C<br>
+                    Temperature Factor: ${temp_factor.toFixed(3)}<br>
+                    Final kVA = ${base_kva.toFixed(2)} × ${temp_factor.toFixed(3)} = ${kva.toFixed(2)} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>4. Standard Size Selection (${design_standard}):</strong><br>
+                    Required: ${kva.toFixed(2)} kVA<br>
+                    Selected Standard Size: ${transformer_size} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>5. Current Calculations:</strong><br>
+                    ${phase === 'three' ? 'Three-phase' : 'Single-phase'} System<br>
+                    Primary FLC = ${transformer_size} × 1000 ÷ ${phase === 'three' ? '(√3 × ' + service_voltage + ')' : service_voltage} = ${flc_primary.toFixed(2)} A<br>
+                    Secondary FLC = ${transformer_size} × 1000 ÷ ${phase === 'three' ? '(√3 × ' + load_voltage + ')' : load_voltage} = ${flc_secondary.toFixed(2)} A
+                </div>
+                
+                <div class="step">
+                    <strong>6. Enhanced OCPD Sizing (NEC 450.3(B) Compliant):</strong><br>
+                    Primary OCPD = ${flc_primary.toFixed(2)} × 1.25 = ${(flc_primary * 1.25).toFixed(2)} A → ${primary_ocpd} A (standard size)<br>
+                    Secondary OCPD = ${transformer_size <= 9 ? 
+                        `${flc_secondary.toFixed(2)} × 1.67 = ${(flc_secondary * 1.67).toFixed(2)} A (≤9kVA: 167% max)` :
+                        `${flc_secondary.toFixed(2)} × 1.25 = ${(flc_secondary * 1.25).toFixed(2)} A (>9kVA: 125% max)`
+                    } → ${secondary_ocpd} A
+                </div>
+                
+                <div class="step">
+                    <strong>7. Enhanced Cable Analysis with Derating:</strong><br>
+                    <strong>Primary Cable (${conductor_material}, ${insulation_type}):</strong><br>
+                    Distance: ${primary_dist_ft.toFixed(0)} ft<br>
+                    Installation: ${installation_method} (Factor: ${primaryCable.derating.installation})<br>
+                    Conductors: ${loaded_conductors} (Factor: ${primaryCable.derating.conductor.toFixed(2)})<br>
+                    Temperature: ${ambient_temp}°C (Factor: ${primaryCable.derating.temperature.toFixed(2)})<br>
+                    Total Derating: ${(primaryCable.derating.total * 100).toFixed(1)}%<br>
+                    Selected Size: ${primaryCable.size}<br>
+                    <br>
+                    <strong>Secondary Cable:</strong><br>
+                    Distance: ${secondary_dist_ft.toFixed(0)} ft<br>
+                    Installation: ${installation_method} (Factor: ${secondaryCable.derating.installation})<br>
+                    Conductors: ${loaded_conductors} (Factor: ${secondaryCable.derating.conductor.toFixed(2)})<br>
+                    Temperature: ${ambient_temp}°C (Factor: ${secondaryCable.derating.temperature.toFixed(2)})<br>
+                    Total Derating: ${(secondaryCable.derating.total * 100).toFixed(1)}%<br>
+                    Selected Size: ${secondaryCable.size}
+                </div>
+                
+                <div class="step">
+                    <strong>8. Fault Current Analysis:</strong><br>
+                    Transformer Impedance: ${transformer_impedance}%<br>
+                    Fault Current = ${transformer_size} × 1000 ÷ ${phase === 'three' ? '(√3 × ' + load_voltage + ' × ' + (transformer_impedance/100) + ')' : '(' + load_voltage + ' × ' + (transformer_impedance/100) + ')'} = ${fault_current.toFixed(0)} A<br>
+                    KAIC Rating = ${fault_current.toFixed(0)} ÷ 1000 = ${kaic} kA<br>
+                    <em>Note: Primary system fault current contribution should be analyzed separately for complete fault current study.</em>
+                </div>
+                
+                <div class="step">
+                    <strong>9. Performance Metrics:</strong><br>
+                    Estimated Efficiency: ${efficiency.toFixed(1)}%<br>
+                    Load Factor: ${(load_kw / transformer_size * 100).toFixed(1)}%<br>
+                    Power Density: ${(load_kw / transformer_size).toFixed(3)} kW/kVA<br>
+                    Design Standard: ${design_standard}
+                </div>
+            `;
+            
+            document.getElementById('calculation').innerHTML = calc;
+        }
+
+        // Enhanced main calculation function
+        function calculateSizing() {
+            try {
+                // Get input values
+                const load_kw = parseFloat(document.getElementById('load_kw').value);
+                const pf = parseFloat(document.getElementById('power_factor').value);
+                
+                let load_voltage = parseFloat(document.getElementById('load_voltage').value);
+                if (document.getElementById('load_voltage').value === 'custom') {
+                    load_voltage = parseFloat(document.getElementById('custom_load_voltage').value);
+                }
+                
+                let service_voltage = parseFloat(document.getElementById('service_voltage').value);
+                if (document.getElementById('service_voltage').value === 'custom') {
+                    service_voltage = parseFloat(document.getElementById('custom_service_voltage').value);
+                }
+                
+                const phase = document.getElementById('phase_type').value;
+                const load_type = document.getElementById('load_type').value;
+                const ambient_temp = parseFloat(document.getElementById('ambient_temp').value);
+                const transformer_type = document.getElementById('transformer_type').value;
+                const mounting_location = document.getElementById('mounting_location').value;
+                const primary_distance = parseFloat(document.getElementById('primary_distance').value);
+                const secondary_distance = parseFloat(document.getElementById('secondary_distance').value);
+                const distance_unit = document.getElementById('distance_unit').value;
+                const conductor_material = document.getElementById('conductor_material').value;
+                const insulation_type = document.getElementById('insulation_type').value;
+                const installation_method = document.getElementById('installation_method').value;
+                const loaded_conductors = parseInt(document.getElementById('loaded_conductors').value);
+                const design_standard = document.getElementById('design_standard').value;
+                const max_vd_primary = parseFloat(document.getElementById('max_vd_primary').value);
+                const max_vd_secondary = parseFloat(document.getElementById('max_vd_secondary').value);
+                const short_circuit_duration = parseFloat(document.getElementById('short_circuit_duration').value);
+
+                // Validate inputs
+                if (!load_kw || !pf || !load_voltage || !service_voltage) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                // Convert distance to feet if needed
+                const primary_dist_ft = distance_unit === 'meters' ? primary_distance * 3.28084 : primary_distance;
+                const secondary_dist_ft = distance_unit === 'meters' ? secondary_distance * 3.28084 : secondary_distance;
+
+                // Calculate kVA with enhanced safety factors based on design standard
+                let safety_factor = getLoadSafetyFactor(load_type, design_standard);
+                const base_kva = (load_kw / pf) * safety_factor;
+                
+                // Enhanced temperature derating based on design standard
+                let temp_factor = getTemperatureDerating(ambient_temp, design_standard);
+                const kva = base_kva * temp_factor;
+                
+                // Standard transformer sizes based on design standard
+                const standard_sizes = getStandardSizes(design_standard);
+                let transformer_size = standard_sizes.find(size => size >= kva) || Math.ceil(kva / 500) * 500;
+
+                // Transformer impedance based on size, type, and standard
+                let transformer_impedance = getTransformerImpedance(transformer_size, transformer_type, design_standard);
+
+                // Current calculations
+                const flc_secondary = phase === 'three' ? 
+                    (transformer_size * 1000) / (Math.sqrt(3) * load_voltage) : 
+                    (transformer_size * 1000) / load_voltage;
+                    
+                const flc_primary = phase === 'three' ? 
+                    (transformer_size * 1000) / (Math.sqrt(3) * service_voltage) : 
+                    (transformer_size * 1000) / service_voltage;
+
+                // Enhanced OCPD calculations with NEC 450.3(B) compliance
+                const { primary_ocpd, secondary_ocpd, nec_compliance } = calculateOCPDWithNEC(
+                    flc_primary, flc_secondary, transformer_size, design_standard
+                );
+
+                // Enhanced cable sizing with derating factors
+                const primaryCable = calculateEnhancedCableSize(
+                    flc_primary * 1.25, primary_dist_ft, service_voltage, phase, 
+                    conductor_material, insulation_type, installation_method, 
+                    loaded_conductors, ambient_temp, max_vd_primary, design_standard
+                );
+                
+                const secondaryCable = calculateEnhancedCableSize(
+                    flc_secondary * 1.25, secondary_dist_ft, load_voltage, phase, 
+                    conductor_material, insulation_type, installation_method, 
+                    loaded_conductors, ambient_temp, max_vd_secondary, design_standard
+                );
+
+                // Enhanced fault current analysis
+                const fault_current = phase === 'three' ?
+                    (transformer_size * 1000) / (Math.sqrt(3) * load_voltage * (transformer_impedance / 100)) :
+                    (transformer_size * 1000) / (load_voltage * (transformer_impedance / 100));
+                    
+                const kaic = Math.ceil(fault_current / 1000);
+
+                // Efficiency calculation
+                const efficiency = calculateEfficiency(transformer_size, load_kw / transformer_size);
+
+                // Generate comprehensive warnings and compliance checks
+                const warnings = generateNECWarnings(
+                    ambient_temp, transformer_type, mounting_location, kaic, 
+                    load_kw / transformer_size, primaryCable, secondaryCable, 
+                    max_vd_primary, max_vd_secondary, design_standard, nec_compliance
+                );
+
+                // Display enhanced results
+                displayEnhancedResults(
+                    transformer_size, transformer_impedance, flc_primary, flc_secondary,
+                    primary_ocpd, secondary_ocpd, fault_current, kaic, efficiency,
+                    primaryCable, secondaryCable, load_kw, warnings, nec_compliance
+                );
+
+                // Generate enhanced calculation steps
+                generateEnhancedCalculationSteps(
+                    load_kw, pf, load_type, safety_factor, base_kva, ambient_temp, 
+                    temp_factor, kva, transformer_size, phase, service_voltage, 
+                    load_voltage, flc_primary, flc_secondary, transformer_impedance,
+                    fault_current, kaic, primary_ocpd, secondary_ocpd, efficiency,
+                    primaryCable, secondaryCable, primary_dist_ft, secondary_dist_ft,
+                    conductor_material, insulation_type, installation_method,
+                    loaded_conductors, design_standard
+                );
+
+            } catch (error) {
+                console.error('Calculation error:', error);
+                alert('An error occurred during calculation. Please check your inputs and try again.');
+            }
+        }
+
+        // Utility functions from original code
+        function getVoltageDropClass(actualVD, maxVD) {
+            if (actualVD <= maxVD * 0.8) return 'voltage-drop-card';
+            if (actualVD <= maxVD) return 'voltage-drop-warning';
+            return 'voltage-drop-critical';
+        }
+
+        function getVoltageDropStatus(actualVD, maxVD) {
+            if (actualVD <= maxVD * 0.8) return '✓ Excellent';
+            if (actualVD <= maxVD) return '⚠ Acceptable';
+            return '✗ Exceeds Limit';
+        }
+
+        function calculateEfficiency(kva, loadFactor) {
+            let baseEfficiency;
+            if (kva <= 150) baseEfficiency = 96.5;
+            else if (kva <= 500) baseEfficiency = 97.5;
+            else if (kva <= 1000) baseEfficiency = 98.0;
+            else baseEfficiency = 98.5;
+            
+            const optimalLoading = 0.75;
+            const loadingPenalty = Math.abs(loadFactor - optimalLoading) * 2;
+            
+            return Math.max(baseEfficiency - loadingPenalty, 90);
+        }
+
+        function toggleCalculation() {
+            const calcDiv = document.getElementById('calculation');
+            const btn = document.querySelector('.toggle-btn');
+            
+            if (calcDiv.classList.contains('show')) {
+                calcDiv.classList.remove('show');
+                btn.innerHTML = '<i class="fas fa-eye"></i> Show Calculations';
+            } else {
+                calcDiv.classList.add('show');
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Calculations';
+            }
+        }
+
+        // Project Management Functions
+        function newProject() {
+            if (confirm('Create a new project? Any unsaved changes will be lost.')) {
+                document.getElementById('sizingForm').reset();
+                document.getElementById('project_name').value = 'Untitled Project';
+                document.getElementById('placeholder').style.display = 'block';
+                document.getElementById('results').classList.remove('show');
+                document.getElementById('actionButtons').style.display = 'none';
+                currentProject = {
+                    name: 'Untitled Project',
+                    data: {},
+                    lastModified: new Date()
+                };
+                updateProgress();
+            }
+        }
+
+        function saveProject() {
+            const projectName = document.getElementById('project_name').value || 'Untitled Project';
+            document.getElementById('saveProjectName').value = projectName;
+            document.getElementById('saveModal').style.display = 'block';
+        }
+
+        function confirmSaveProject() {
+            const name = document.getElementById('saveProjectName').value;
+            const description = document.getElementById('saveProjectDescription').value;
+            
+            if (!name.trim()) {
+                alert('Please enter a project name');
+                return;
+            }
+
+            const projectData = {
+                name: name,
+                description: description,
+                data: getFormData(),
+                lastModified: new Date(),
+                version: '1.1'
+            };
+
+            // Save to browser storage
+            let projects = JSON.parse(localStorage.getItem('PwrSysPro_projects') || '[]');
+            const existingIndex = projects.findIndex(p => p.name === name);
+            
+            if (existingIndex >= 0) {
+                if (confirm('A project with this name already exists. Overwrite?')) {
+                    projects[existingIndex] = projectData;
+                } else {
+                    return;
+                }
+            } else {
+                projects.push(projectData);
+            }
+            
+            localStorage.setItem('PwrSysPro_projects', JSON.stringify(projects));
+            currentProject = projectData;
+            document.getElementById('project_name').value = name;
+            
+            closeSaveModal();
+            alert('Project saved successfully!');
+        }
+
+        function showLoadModal() {
+            loadProjectList();
+            document.getElementById('loadModal').style.display = 'block';
+        }
+
+        function loadProjectList() {
+            const projects = JSON.parse(localStorage.getItem('PwrSysPro_projects') || '[]');
+            const projectList = document.getElementById('projectList');
+            
+            if (projects.length === 0) {
+                projectList.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 2rem;">No saved projects found</p>';
+                return;
+            }
+
+            projectList.innerHTML = projects.map(project => `
+                <div class="project-item" onclick="loadProject('${project.name}')">
+                    <div class="project-info">
+                        <div class="project-name">${project.name}</div>
+                        <div class="project-date">Modified: ${new Date(project.lastModified).toLocaleString()}</div>
+                        ${project.description ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${project.description}</div>` : ''}
+                    </div>
+                    <div class="project-actions">
+                        <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteProject('${project.name}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadProject(projectName) {
+            const projects = JSON.parse(localStorage.getItem('PwrSysPro_projects') || '[]');
+            const project = projects.find(p => p.name === projectName);
+            
+            if (!project) {
+                alert('Project not found');
+                return;
+            }
+
+            // Load project data into form
+            setFormData(project.data);
+            document.getElementById('project_name').value = project.name;
+            currentProject = project;
+            
+            closeLoadModal();
+            updateProgress();
+            alert('Project loaded successfully!');
+        }
+
+        function deleteProject(projectName) {
+            if (confirm(`Are you sure you want to delete project "${projectName}"?`)) {
+                let projects = JSON.parse(localStorage.getItem('PwrSysPro_projects') || '[]');
+                projects = projects.filter(p => p.name !== projectName);
+                localStorage.setItem('PwrSysPro_projects', JSON.stringify(projects));
+                loadProjectList();
+            }
+        }
+
+        function getFormData() {
+            const formData = {};
+            const inputs = document.querySelectorAll('#sizingForm input, #sizingForm select');
+            inputs.forEach(input => {
+                formData[input.id] = input.value;
+            });
+            return formData;
+        }
+
+        function setFormData(data) {
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = data[key];
+                    // Trigger change event for custom voltage handling
+                    if (key === 'load_voltage' || key === 'service_voltage') {
+                        element.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = 'none';
+            document.getElementById('saveProjectName').value = '';
+            document.getElementById('saveProjectDescription').value = '';
+        }
+
+        function closeLoadModal() {
+            document.getElementById('loadModal').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const saveModal = document.getElementById('saveModal');
+            const loadModal = document.getElementById('loadModal');
+            if (event.target === saveModal) {
+                closeSaveModal();
+            }
+            if (event.target === loadModal) {
+                closeLoadModal();
+            }
+        }
+
+        // Enhanced PDF Generation
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFontSize(20);
+            doc.setTextColor(102, 126, 234);
+            doc.text('PwrSysPro V1.1 Transformer Sizing Report', 20, 25);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Project: ${document.getElementById('project_name').value}`, 20, 35);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 42);
+            doc.text(`Design Standard: ${document.getElementById('design_standard').value}`, 20, 49);
+            
+            let yPos = 62;
+            
+            // Input Parameters
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text('Input Parameters', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            
+            const inputs = [
+                {label: 'Total Load', value: document.getElementById('load_kw').value + ' kW'},
+                {label: 'Power Factor', value: document.getElementById('power_factor').value},
+                {label: 'Load Voltage', value: getVoltageValue('load_voltage') + ' V'},
+                {label: 'Service Voltage', value: getVoltageValue('service_voltage') + ' V'},
+                {label: 'Phase Type', value: document.getElementById('phase_type').value},
+                {label: 'Load Type', value: document.getElementById('load_type').value},
+                {label: 'Design Standard', value: document.getElementById('design_standard').value},
+                {label: 'Transformer Type', value: document.getElementById('transformer_type').value},
+                {label: 'Conductor Material', value: document.getElementById('conductor_material').value},
+                {label: 'Insulation Type', value: document.getElementById('insulation_type').value},
+                {label: 'Installation Method', value: document.getElementById('installation_method').value},
+                {label: 'Loaded Conductors', value: document.getElementById('loaded_conductors').value},
+                {label: 'Primary Distance', value: document.getElementById('primary_distance').value + ' ' + document.getElementById('distance_unit').value},
+                {label: 'Secondary Distance', value: document.getElementById('secondary_distance').value + ' ' + document.getElementById('distance_unit').value},
+                {label: 'Ambient Temperature', value: document.getElementById('ambient_temp').value + '°C'},
+                {label: 'Max VD Primary', value: document.getElementById('max_vd_primary').value + '%'},
+                {label: 'Max VD Secondary', value: document.getElementById('max_vd_secondary').value + '%'}
+            ];
+            
+            inputs.forEach(input => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text(`${input.label}: ${input.value}`, 20, yPos);
+                yPos += 6;
+            });
+            
+            yPos += 10;
+            
+            // Results
+            doc.setFontSize(14);
+            doc.setTextColor(44, 62, 80);
+            doc.text('Enhanced Calculation Results', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            
+            const resultsElement = document.getElementById('results');
+            if (resultsElement && resultsElement.classList.contains('show')) {
+                const resultsText = resultsElement.innerText;
+                const lines = resultsText.split('\n').filter(line => line.trim());
+                
+                lines.forEach(line => {
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    if (line.length > 90) {
+                        const words = line.split(' ');
+                        let currentLine = '';
+                        words.forEach(word => {
+                            if ((currentLine + word).length > 90) {
+                                doc.text(currentLine, 20, yPos);
+                                yPos += 6;
+                                currentLine = word + ' ';
+                            } else {
+                                currentLine += word + ' ';
+                            }
+                        });
+                        if (currentLine.trim()) {
+                            doc.text(currentLine, 20, yPos);
+                            yPos += 6;
+                        }
+                    } else {
+                        doc.text(line, 20, yPos);
+                        yPos += 6;
+                    }
+                });
+            }
+            
+            // Add calculations if visible
+            const calcDiv = document.getElementById('calculation');
+            if (calcDiv.classList.contains('show')) {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                } else {
+                    yPos += 10;
+                }
+                
+                doc.setFontSize(14);
+                doc.setTextColor(44, 62, 80);
+                doc.text('Detailed Calculations', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                
+                const calcText = calcDiv.innerText;
+                const calcLines = calcText.split('\n').filter(line => line.trim());
+                
+                calcLines.forEach(line => {
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    if (line.length > 90) {
+                        const words = line.split(' ');
+                        let currentLine = '';
+                        words.forEach(word => {
+                            if ((currentLine + word).length > 90) {
+                                doc.text(currentLine, 20, yPos);
+                                yPos += 6;
+                                currentLine = word + ' ';
+                            } else {
+                                currentLine += word + ' ';
+                            }
+                        });
+                        if (currentLine.trim()) {
+                            doc.text(currentLine, 20, yPos);
+                            yPos += 6;
+                        }
+                    } else {
+                        doc.text(line, 20, yPos);
+                        yPos += 6;
+                    }
+                });
+            }
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text(`PwrSysPro v1.1 - Page ${i} of ${pageCount}`, 20, 285);
+                doc.text('© 2024 PwrSysPro Inc. - Professional Electrical Engineering Solutions', 120, 285);
+            }
+            
+            const fileName = `PwrSysPro_V1.1_${document.getElementById('project_name').value.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`;
+            doc.save(fileName);
+        }
+
+        function getVoltageValue(elementId) {
+            const select = document.getElementById(elementId);
+            if (select.value === 'custom') {
+                const customInput = document.getElementById('custom_' + elementId);
+                return customInput.value;
+            }
+            return select.value;
+        }
+
+        // Initialize progress on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+            
+            // Add change listeners to all form inputs
+            const inputs = document.querySelectorAll('#sizingForm input, #sizingForm select');
+            inputs.forEach(input => {
+                input.addEventListener('change', updateProgress);
+                input.addEventListener('input', updateProgress);
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveProject();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        showLoadModal();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        newProject();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

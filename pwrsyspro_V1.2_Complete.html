@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PwrSysPro V1.2 Complete - Advanced Transformer Sizing Tool</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .project-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .version-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #2c3e50;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-field.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label i {
+            color: #667eea;
+            width: 16px;
+        }
+
+        input, select, textarea {
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .calculate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e8ed;
+            border-radius: 3px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-detail {
+            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+
+        .parallel-cable-analysis {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .parallel-cable-analysis h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cable-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .cable-option {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid #e1e8ed;
+        }
+
+        .cable-option.recommended {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .compliance-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .compliance-good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .compliance-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .compliance-critical {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .suggestions-box {
+            background: #e7f3ff;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .suggestions-box h5 {
+            color: #0c5460;
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestions-box ul {
+            margin-left: 1rem;
+            color: #0c5460;
+        }
+
+        .voltage-drop-good { color: #28a745; }
+        .voltage-drop-warning { color: #ffc107; }
+        .voltage-drop-critical { color: #dc3545; }
+
+        #actionButtons {
+            display: none;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .close:hover {
+            color: #dc3545;
+        }
+
+        .project-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .project-item:hover {
+            background: #e9ecef;
+        }
+
+        .loading-spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+        }
+
+        .enhancement-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .enhancement-section h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .advanced-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .control-group {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auto-save indicator -->
+    <div id="autoSaveIndicator" class="auto-save-indicator">
+        <i class="fas fa-save"></i> Auto-saved
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="logo-text">PwrSysPro V1.2</div>
+            </div>
+            <div class="header-actions">
+                <button class="project-btn" onclick="newProject()">
+                    <i class="fas fa-file-plus"></i>
+                    New Project
+                </button>
+                <button class="project-btn" onclick="saveProject()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+                <button class="project-btn" onclick="showLoadModal()">
+                    <i class="fas fa-folder-open"></i>
+                    Load
+                </button>
+                <div class="version-badge">V1.2 Complete</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="main-content">
+            <!-- Input Form Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    System Configuration
+                </div>
+
+                <!-- Project Information -->
+                <div class="form-group">
+                    <div class="form-field full-width">
+                        <label>
+                            <i class="fas fa-project-diagram"></i>
+                            Project Name
+                        </label>
+                        <input type="text" id="project_name" placeholder="Enter project name" value="Untitled Project">
+                    </div>
+                </div>
+
+                <!-- Load Parameters -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-plug"></i>
+                            Load (kW)
+                        </label>
+                        <input type="number" id="load_kw" step="0.1" placeholder="Enter load in kW" min="0">
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-wave-square"></i>
+                            Power Factor
+                        </label>
+                        <input type="number" id="power_factor" step="0.01" min="0.5" max="1" value="0.85" placeholder="0.85">
+                    </div>
+                </div>
+
+                <!-- Voltage Configuration -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-bolt"></i>
+                            Load Voltage (V)
+                        </label>
+                        <select id="load_voltage">
+                            <option value="120">120V Single Phase</option>
+                            <option value="240">240V Single Phase</option>
+                            <option value="208" selected>208V Three Phase</option>
+                            <option value="240">240V Three Phase</option>
+                            <option value="277">277V Three Phase</option>
+                            <option value="480">480V Three Phase</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="number" id="custom_load_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage">
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-home"></i>
+                            Service Voltage (V)
+                        </label>
+                        <select id="service_voltage">
+                            <option value="120">120V Single Phase</option>
+                            <option value="240">240V Single Phase</option>
+                            <option value="208">208V Three Phase</option>
+                            <option value="240">240V Three Phase</option>
+                            <option value="277">277V Three Phase</option>
+                            <option value="480" selected>480V Three Phase</option>
+                            <option value="4160">4160V Three Phase</option>
+                            <option value="13800">13.8kV Three Phase</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="number" id="custom_service_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage">
+                    </div>
+                </div>
+
+                <!-- System Type -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-sitemap"></i>
+                            Phase Type
+                        </label>
+                        <select id="phase_type">
+                            <option value="single">Single Phase</option>
+                            <option value="three" selected>Three Phase</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-industry"></i>
+                            Load Type
+                        </label>
+                        <select id="load_type">
+                            <option value="general" selected>General Load</option>
+                            <option value="motor">Motor Load</option>
+                            <option value="lighting">Lighting Load</option>
+                            <option value="mixed">Mixed Load</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Environmental Parameters -->
+                <div class="enhancement-section">
+                    <h4><i class="fas fa-thermometer-half"></i> Environmental & Design Parameters</h4>
+                    <div class="advanced-controls">
+                        <div class="control-group">
+                            <label>Ambient Temperature (°C)</label>
+                            <input type="number" id="ambient_temp" value="40" step="1" min="-40" max="100">
+                        </div>
+                        <div class="control-group">
+                            <label>Site Altitude (m)</label>
+                            <input type="number" id="site_altitude" value="0" step="1" min="0" max="5000">
+                        </div>
+                        <div class="control-group">
+                            <label>Expansion Margin (%)</label>
+                            <input type="number" id="expansion_margin" value="25" step="1" min="0" max="100">
+                        </div>
+                        <div class="control-group">
+                            <label>Design Standard</label>
+                            <select id="design_standard">
+                                <option value="NEC" selected>NEC (USA)</option>
+                                <option value="IEC">IEC (International)</option>
+                                <option value="AS_NZS">AS/NZS (Australia/NZ)</option>
+                                <option value="CEC">CEC (Canada)</option>
+                                <option value="PEC">PEC (Philippines)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transformer Configuration -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-box"></i>
+                            Transformer Type
+                        </label>
+                        <select id="transformer_type">
+                            <option value="dry" selected>Dry-type</option>
+                            <option value="oil">Oil-immersed</option>
+                            <option value="isolation">Isolation</option>
+                            <option value="auto">Auto-transformer</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-map-marker-alt"></i>
+                            Mounting Location
+                        </label>
+                        <select id="mounting_location">
+                            <option value="indoor" selected>Indoor</option>
+                            <option value="outdoor">Outdoor</option>
+                            <option value="vault">Vault</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Distance Parameters -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-ruler"></i>
+                            Primary Distance
+                        </label>
+                        <input type="number" id="primary_distance" step="0.1" placeholder="Distance" min="0">
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-ruler"></i>
+                            Secondary Distance
+                        </label>
+                        <input type="number" id="secondary_distance" step="0.1" placeholder="Distance" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>
+                            <i class="fas fa-ruler-combined"></i>
+                            Distance Unit
+                        </label>
+                        <select id="distance_unit">
+                            <option value="feet" selected>Feet</option>
+                            <option value="meters">Meters</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Enhanced Parallel Cable Configuration -->
+                <div class="enhancement-section">
+                    <h4><i class="fas fa-cable-car"></i> Enhanced Parallel Cable Configuration</h4>
+                    
+                    <!-- Primary Cable Settings -->
+                    <div class="parallel-cable-analysis">
+                        <h4><i class="fas fa-arrow-up"></i> Primary Cable Settings</h4>
+                        <div class="advanced-controls">
+                            <div class="control-group">
+                                <label>Parallel Cables</label>
+                                <select id="primary_parallel_cables">
+                                    <option value="1" selected>1 (Single Cable)</option>
+                                    <option value="2">2 Parallel</option>
+                                    <option value="3">3 Parallel</option>
+                                    <option value="4">4 Parallel</option>
+                                    <option value="6">6 Parallel</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Max Cable Size</label>
+                                <select id="primary_max_cable_size">
+                                    <option value="500" selected>500 kcmil</option>
+                                    <option value="750">750 kcmil</option>
+                                    <option value="1000">1000 kcmil</option>
+                                    <option value="unlimited">No Limit</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Conductor Material</label>
+                                <select id="primary_conductor_material">
+                                    <option value="copper" selected>Copper</option>
+                                    <option value="aluminum">Aluminum</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Insulation Type</label>
+                                <select id="primary_insulation_type">
+                                    <option value="THWN" selected>THWN</option>
+                                    <option value="XHHW">XHHW</option>
+                                    <option value="EPR">EPR</option>
+                                    <option value="XLPE">XLPE</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Installation Method</label>
+                                <select id="primary_installation_method">
+                                    <option value="conduit" selected>In Conduit</option>
+                                    <option value="cable_tray">Cable Tray</option>
+                                    <option value="direct_burial">Direct Burial</option>
+                                    <option value="free_air">Free Air</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Loaded Conductors</label>
+                                <select id="primary_loaded_conductors">
+                                    <option value="2">2 (Single Phase)</option>
+                                    <option value="3" selected>3 (Three Phase)</option>
+                                    <option value="4">4 (3P + N)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Cable Settings -->
+                    <div class="parallel-cable-analysis">
+                        <h4><i class="fas fa-arrow-down"></i> Secondary Cable Settings</h4>
+                        <div class="advanced-controls">
+                            <div class="control-group">
+                                <label>Parallel Cables</label>
+                                <select id="secondary_parallel_cables">
+                                    <option value="1" selected>1 (Single Cable)</option>
+                                    <option value="2">2 Parallel</option>
+                                    <option value="3">3 Parallel</option>
+                                    <option value="4">4 Parallel</option>
+                                    <option value="6">6 Parallel</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Max Cable Size</label>
+                                <select id="secondary_max_cable_size">
+                                    <option value="500" selected>500 kcmil</option>
+                                    <option value="750">750 kcmil</option>
+                                    <option value="1000">1000 kcmil</option>
+                                    <option value="unlimited">No Limit</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Conductor Material</label>
+                                <select id="secondary_conductor_material">
+                                    <option value="copper" selected>Copper</option>
+                                    <option value="aluminum">Aluminum</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Insulation Type</label>
+                                <select id="secondary_insulation_type">
+                                    <option value="THWN" selected>THWN</option>
+                                    <option value="XHHW">XHHW</option>
+                                    <option value="EPR">EPR</option>
+                                    <option value="XLPE">XLPE</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Installation Method</label>
+                                <select id="secondary_installation_method">
+                                    <option value="conduit" selected>In Conduit</option>
+                                    <option value="cable_tray">Cable Tray</option>
+                                    <option value="direct_burial">Direct Burial</option>
+                                    <option value="free_air">Free Air</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Loaded Conductors</label>
+                                <select id="secondary_loaded_conductors">
+                                    <option value="2">2 (Single Phase)</option>
+                                    <option value="3" selected>3 (Three Phase)</option>
+                                    <option value="4">4 (3P + N)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="loadingSpinner" class="loading-spinner"></div>
+
+                <!-- Calculate Button -->
+                <button type="button" class="calculate-btn" onclick="calculateSizing()">
+                    <i class="fas fa-calculator"></i>
+                    Calculate Transformer Sizing
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Results & Analysis
+                </div>
+
+                <div id="placeholder" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    <i class="fas fa-calculator" style="font-size: 48px; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Enter your system parameters and click calculate to see results</p>
+                </div>
+
+                <div id="results" style="display: none;"></div>
+
+                <div id="actionButtons">
+                    <button class="btn btn-primary" onclick="generatePDF()">
+                        <i class="fas fa-file-pdf"></i>
+                        Export PDF
+                    </button>
+                    <button class="btn btn-success" onclick="generateExcel()">
+                        <i class="fas fa-file-excel"></i>
+                        Export Excel
+                    </button>
+                    <button class="btn btn-info" onclick="showCalculationSteps()">
+                        <i class="fas fa-info-circle"></i>
+                        Show Calculation Steps
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Project Modal -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSaveModal()">&times;</span>
+            <h3>Save Project</h3>
+            <div class="form-field" style="margin-top: 1rem;">
+                <label>Project Name</label>
+                <input type="text" id="saveProjectName" placeholder="Enter project name">
+            </div>
+            <div class="form-field" style="margin-top: 1rem;">
+                <label>Description (Optional)</label>
+                <textarea id="saveProjectDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Enter project description"></textarea>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="confirmSaveProject()">
+                    <i class="fas fa-save"></i>
+                    Save Project
+                </button>
+                <button class="btn" onclick="closeSaveModal()" style="background: #6c757d; color: white;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Project Modal -->
+    <div id="loadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoadModal()">&times;</span>
+            <h3>Load Project</h3>
+            <div id="projectList" style="margin-top: 1rem; max-height: 300px; overflow-y: auto;">
+                <!-- Projects will be loaded here -->
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <button class="btn" onclick="closeLoadModal()" style="background: #6c757d; color: white;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Global variables
+        let currentProject = {
+            name: 'Untitled Project',
+            data: {},
+            lastModified: new Date()
+        };
+
+        let autoSaveEnabled = true;
+        let autoSaveTimer;
+
+        // Enhanced wire data with more comprehensive sizing
+        const wireData = {
+            copper: {
+                '14': { ampacity: 20, resistance: 3.07, reactance: 0.058 },
+                '12': { ampacity: 25, resistance: 1.93, reactance: 0.054 },
+                '10': { ampacity: 35, resistance: 1.21, resistance: 0.050 },
+                '8': { ampacity: 50, resistance: 0.764, reactance: 0.052 },
+                '6': { ampacity: 65, resistance: 0.491, reactance: 0.051 },
+                '4': { ampacity: 85, resistance: 0.308, reactance: 0.048 },
+                '2': { ampacity: 115, resistance: 0.194, reactance: 0.042 },
+                '1': { ampacity: 130, resistance: 0.154, reactance: 0.046 },
+                '1/0': { ampacity: 150, resistance: 0.122, reactance: 0.044 },
+                '2/0': { ampacity: 175, resistance: 0.097, reactance: 0.042 },
+                '3/0': { ampacity: 200, resistance: 0.077, reactance: 0.040 },
+                '4/0': { ampacity: 230, resistance: 0.061, reactance: 0.038 },
+                '250': { ampacity: 255, resistance: 0.052, reactance: 0.041 },
+                '300': { ampacity: 285, resistance: 0.043, reactance: 0.039 },
+                '350': { ampacity: 310, resistance: 0.037, reactance: 0.038 },
+                '400': { ampacity: 335, resistance: 0.032, reactance: 0.037 },
+                '500': { ampacity: 380, resistance: 0.026, reactance: 0.036 },
+                '600': { ampacity: 420, resistance: 0.022, reactance: 0.035 },
+                '750': { ampacity: 475, resistance: 0.017, reactance: 0.034 },
+                '1000': { ampacity: 545, resistance: 0.013, reactance: 0.033 }
+            },
+            aluminum: {
+                '12': { ampacity: 20, resistance: 3.18, reactance: 0.054 },
+                '10': { ampacity: 25, resistance: 2.00, reactance: 0.050 },
+                '8': { ampacity: 40, resistance: 1.26, reactance: 0.052 },
+                '6': { ampacity: 50, resistance: 0.808, reactance: 0.051 },
+                '4': { ampacity: 65, resistance: 0.508, reactance: 0.048 },
+                '2': { ampacity: 90, resistance: 0.319, reactance: 0.042 },
+                '1': { ampacity: 100, resistance: 0.253, reactance: 0.046 },
+                '1/0': { ampacity: 120, resistance: 0.201, reactance: 0.044 },
+                '2/0': { ampacity: 135, resistance: 0.159, reactance: 0.042 },
+                '3/0': { ampacity: 155, resistance: 0.126, reactance: 0.040 },
+                '4/0': { ampacity: 180, resistance: 0.100, reactance: 0.038 },
+                '250': { ampacity: 205, resistance: 0.085, reactance: 0.041 },
+                '300': { ampacity: 230, resistance: 0.071, reactance: 0.039 },
+                '350': { ampacity: 250, resistance: 0.061, reactance: 0.038 },
+                '400': { ampacity: 270, resistance: 0.053, reactance: 0.037 },
+                '500': { ampacity: 310, resistance: 0.043, reactance: 0.036 },
+                '600': { ampacity: 340, resistance: 0.036, reactance: 0.035 },
+                '750': { ampacity: 385, resistance: 0.029, reactance: 0.034 },
+                '1000': { ampacity: 445, resistance: 0.022, reactance: 0.033 }
+            }
+        };
+
+        // Standard transformer sizes (kVA)
+        const transformerSizes = [
+            3, 5, 7.5, 10, 15, 25, 30, 37.5, 45, 50, 75, 100, 112.5, 150, 167, 
+            200, 225, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 3750, 
+            5000, 6000, 7500, 10000
+        ];
+
+        // Transformer impedance values by type and size
+        const transformerImpedance = {
+            dry: {
+                small: 0.05,  // up to 500 kVA
+                medium: 0.06, // 500-2000 kVA
+                large: 0.07   // above 2000 kVA
+            },
+            oil: {
+                small: 0.04,
+                medium: 0.055,
+                large: 0.065
+            },
+            isolation: {
+                small: 0.06,
+                medium: 0.07,
+                large: 0.08
+            },
+            auto: {
+                small: 0.08,
+                medium: 0.10,
+                large: 0.12
+            }
+        };
+
+        // Enhanced derating factors
+        const deratingFactors = {
+            temperature: {
+                40: 1.00, 41: 0.96, 42: 0.91, 43: 0.87, 44: 0.82, 45: 0.76,
+                46: 0.71, 47: 0.65, 48: 0.58, 49: 0.50, 50: 0.41
+            },
+            altitude: {
+                0: 1.00, 1000: 0.96, 2000: 0.92, 3000: 0.88, 4000: 0.84, 5000: 0.80
+            },
+            conduitFill: {
+                1: 1.00, 2: 0.80, 3: 0.70, 4: 0.60
+            }
+        };
+
+        // Compliance requirements by standard
+        const complianceStandards = {
+            NEC: {
+                maxVoltageDrop: { primary: 3, secondary: 5, total: 5 },
+                minSafetyFactor: 1.25,
+                temperatureLimit: 75,
+                requiresEGC: true
+            },
+            IEC: {
+                maxVoltageDrop: { primary: 4, secondary: 4, total: 6 },
+                minSafetyFactor: 1.20,
+                temperatureLimit: 70,
+                requiresEGC: false
+            },
+            AS_NZS: {
+                maxVoltageDrop: { primary: 2.5, secondary: 5, total: 6 },
+                minSafetyFactor: 1.25,
+                temperatureLimit: 75,
+                requiresEGC: true
+            },
+            CEC: {
+                maxVoltageDrop: { primary: 5, secondary: 5, total: 7 },
+                minSafetyFactor: 1.25,
+                temperatureLimit: 75,
+                requiresEGC: true
+            },
+            PEC: {
+                maxVoltageDrop: { primary: 3, secondary: 5, total: 5 },
+                minSafetyFactor: 1.25,
+                temperatureLimit: 75,
+                requiresEGC: true
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            initializeAutoSave();
+            loadAutoSavedData();
+            updateProgress();
+        });
+
+        function setupEventListeners() {
+            // Custom voltage inputs
+            document.getElementById('load_voltage').addEventListener('change', function() {
+                const customInput = document.getElementById('custom_load_voltage');
+                if (this.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                }
+            });
+
+            document.getElementById('service_voltage').addEventListener('change', function() {
+                const customInput = document.getElementById('custom_service_voltage');
+                if (this.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                }
+            });
+
+            // Auto-save triggers
+            const autoSaveFields = ['load_kw', 'power_factor', 'load_voltage', 'service_voltage', 
+                                  'phase_type', 'load_type', 'ambient_temp', 'site_altitude', 
+                                  'expansion_margin', 'design_standard'];
+            
+            autoSaveFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('change', triggerAutoSave);
+                    field.addEventListener('input', debounceAutoSave);
+                }
+            });
+
+            // Progress tracking
+            const allFields = document.querySelectorAll('input, select');
+            allFields.forEach(field => {
+                field.addEventListener('change', updateProgress);
+                field.addEventListener('input', updateProgress);
+            });
+        }
+
+        function updateProgress() {
+            const requiredFields = ['load_kw', 'power_factor', 'primary_distance', 'secondary_distance'];
+            const completedFields = requiredFields.filter(fieldId => {
+                const field = document.getElementById(fieldId);
+                return field && field.value && field.value.trim() !== '';
+            });
+
+            const progress = (completedFields.length / requiredFields.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function initializeAutoSave() {
+            // Check for existing auto-save data
+            const autoSaveData = localStorage.getItem('pwrsyspro_autosave');
+            if (autoSaveData) {
+                showAutoSaveRecovery();
+            }
+        }
+
+        function showAutoSaveRecovery() {
+            if (confirm('Auto-saved data found. Would you like to recover your previous session?')) {
+                loadAutoSavedData();
+            } else {
+                localStorage.removeItem('pwrsyspro_autosave');
+            }
+        }
+
+        function loadAutoSavedData() {
+            const autoSaveData = localStorage.getItem('pwrsyspro_autosave');
+            if (autoSaveData) {
+                try {
+                    const data = JSON.parse(autoSaveData);
+                    Object.keys(data).forEach(key => {
+                        const element = document.getElementById(key);
+                        if (element) {
+                            element.value = data[key];
+                            if (element.type === 'select-one') {
+                                element.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    });
+                    updateProgress();
+                } catch (e) {
+                    console.error('Error loading auto-save data:', e);
+                }
+            }
+        }
+
+        function triggerAutoSave() {
+            if (autoSaveEnabled) {
+                saveToAutoSave();
+                showAutoSaveIndicator();
+            }
+        }
+
+        function debounceAutoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(triggerAutoSave, 2000); // 2 second delay
+        }
+
+        function saveToAutoSave() {
+            const formData = getFormData();
+            localStorage.setItem('pwrsyspro_autosave', JSON.stringify(formData));
+        }
+
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function showLoadingState() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.querySelector('.calculate-btn').disabled = true;
+        }
+
+        function hideLoadingState() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.querySelector('.calculate-btn').disabled = false;
+        }
+
+        function validateInputs() {
+            const errors = [];
+            
+            const loadKw = parseFloat(document.getElementById('load_kw').value);
+            if (!loadKw || loadKw <= 0) {
+                errors.push('Load (kW) must be greater than 0');
+            }
+
+            const powerFactor = parseFloat(document.getElementById('power_factor').value);
+            if (!powerFactor || powerFactor < 0.5 || powerFactor > 1) {
+                errors.push('Power factor must be between 0.5 and 1.0');
+            }
+
+            const primaryDistance = parseFloat(document.getElementById('primary_distance').value);
+            if (!primaryDistance || primaryDistance <= 0) {
+                errors.push('Primary distance must be greater than 0');
+            }
+
+            const secondaryDistance = parseFloat(document.getElementById('secondary_distance').value);
+            if (!secondaryDistance || secondaryDistance <= 0) {
+                errors.push('Secondary distance must be greater than 0');
+            }
+
+            const ambientTemp = parseFloat(document.getElementById('ambient_temp').value);
+            if (ambientTemp < -40 || ambientTemp > 100) {
+                errors.push('Ambient temperature must be between -40°C and 100°C');
+            }
+
+            const siteAltitude = parseFloat(document.getElementById('site_altitude').value);
+            if (siteAltitude < 0 || siteAltitude > 5000) {
+                errors.push('Site altitude must be between 0 and 5000 meters');
+            }
+
+            return errors;
+        }
+
+        function showErrorMessage(errors) {
+            const errorHtml = `
+                <div class="error-message">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Input Validation Errors</h4>
+                    <ul>
+                        ${errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = errorHtml;
+            resultsDiv.style.display = 'block';
+            document.getElementById('placeholder').style.display = 'none';
+        }
+
+        async function calculateSizing() {
+            // Validate inputs first
+            const validationErrors = validateInputs();
+            if (validationErrors.length > 0) {
+                showErrorMessage(validationErrors);
+                return;
+            }
+
+            showLoadingState();
+
+            // Simulate processing delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            try {
+                // Get input values with enhanced error handling
+                const loadKw = parseFloat(document.getElementById('load_kw').value);
+                const powerFactor = parseFloat(document.getElementById('power_factor').value);
+                
+                let loadVoltage = parseFloat(document.getElementById('load_voltage').value);
+                if (document.getElementById('load_voltage').value === 'custom') {
+                    loadVoltage = parseFloat(document.getElementById('custom_load_voltage').value);
+                }
+                
+                let serviceVoltage = parseFloat(document.getElementById('service_voltage').value);
+                if (document.getElementById('service_voltage').value === 'custom') {
+                    serviceVoltage = parseFloat(document.getElementById('custom_service_voltage').value);
+                }
+                
+                const phaseType = document.getElementById('phase_type').value;
+                const loadType = document.getElementById('load_type').value;
+                const ambientTemp = parseFloat(document.getElementById('ambient_temp').value);
+                const siteAltitude = parseFloat(document.getElementById('site_altitude').value);
+                const expansionMargin = parseFloat(document.getElementById('expansion_margin').value);
+                const designStandard = document.getElementById('design_standard').value;
+                const transformerType = document.getElementById('transformer_type').value;
+                const mountingLocation = document.getElementById('mounting_location').value;
+                const primaryDistance = parseFloat(document.getElementById('primary_distance').value);
+                const secondaryDistance = parseFloat(document.getElementById('secondary_distance').value);
+                const distanceUnit = document.getElementById('distance_unit').value;
+
+                // Get enhanced parallel cable settings
+                const primaryParallelCables = parseInt(document.getElementById('primary_parallel_cables').value);
+                const primaryMaxCableSize = document.getElementById('primary_max_cable_size').value;
+                const primaryConductorMaterial = document.getElementById('primary_conductor_material').value;
+                const primaryInstallationMethod = document.getElementById('primary_installation_method').value;
+                const primaryLoadedConductors = parseInt(document.getElementById('primary_loaded_conductors').value);
+
+                const secondaryParallelCables = parseInt(document.getElementById('secondary_parallel_cables').value);
+                const secondaryMaxCableSize = document.getElementById('secondary_max_cable_size').value;
+                const secondaryConductorMaterial = document.getElementById('secondary_conductor_material').value;
+                const secondaryInstallationMethod = document.getElementById('secondary_installation_method').value;
+                const secondaryLoadedConductors = parseInt(document.getElementById('secondary_loaded_conductors').value);
+
+                // Calculate enhanced results
+                const calculationData = await performEnhancedCalculations({
+                    loadKw, powerFactor, loadVoltage, serviceVoltage, phaseType, loadType,
+                    ambientTemp, siteAltitude, expansionMargin, designStandard, transformerType,
+                    mountingLocation, primaryDistance, secondaryDistance, distanceUnit,
+                    primaryParallelCables, primaryMaxCableSize, primaryConductorMaterial,
+                    primaryInstallationMethod, primaryLoadedConductors,
+                    secondaryParallelCables, secondaryMaxCableSize, secondaryConductorMaterial,
+                    secondaryInstallationMethod, secondaryLoadedConductors
+                });
+
+                displayEnhancedResults(calculationData);
+
+            } catch (error) {
+                console.error('Calculation error:', error);
+                showErrorMessage(['An error occurred during calculation. Please check your inputs and try again.']);
+            } finally {
+                hideLoadingState();
+            }
+        }
+
+        async function performEnhancedCalculations(params) {
+            // Convert distance to meters for calculations
+            const distanceMultiplier = params.distanceUnit === 'meters' ? 1 : 0.3048;
+            const primaryDistanceM = params.primaryDistance * distanceMultiplier;
+            const secondaryDistanceM = params.secondaryDistance * distanceMultiplier;
+
+            // Calculate kVA with enhancement margin
+            const baseKva = params.loadKw / params.powerFactor;
+            const enhancedKva = baseKva * (1 + params.expansionMargin / 100);
+
+            // Apply load type safety factors
+            const loadTypeFactors = {
+                general: 1.0,
+                motor: 1.25,
+                lighting: 1.1,
+                mixed: 1.15
+            };
+            const finalKva = enhancedKva * loadTypeFactors[params.loadType];
+
+            // Select transformer size
+            const transformerSize = transformerSizes.find(size => size >= finalKva) || transformerSizes[transformerSizes.length - 1];
+
+            // Calculate altitude factor
+            const altitudeFactor = calculateAltitudeFactor(params.siteAltitude);
+
+            // Calculate primary and secondary currents
+            const primaryCurrent = params.phaseType === 'three' ? 
+                (transformerSize * 1000) / (Math.sqrt(3) * params.serviceVoltage) :
+                (transformerSize * 1000) / params.serviceVoltage;
+
+            const secondaryCurrent = params.phaseType === 'three' ?
+                (transformerSize * 1000) / (Math.sqrt(3) * params.loadVoltage) :
+                (transformerSize * 1000) / params.loadVoltage;
+
+            // Enhanced parallel cable calculations
+            const primaryCableData = calculateEnhancedParallelCableSize({
+                current: primaryCurrent,
+                distance: primaryDistanceM,
+                voltage: params.serviceVoltage,
+                phase: params.phaseType,
+                material: params.primaryConductorMaterial,
+                parallelCount: params.primaryParallelCables,
+                maxCableSize: params.primaryMaxCableSize,
+                installationMethod: params.primaryInstallationMethod,
+                loadedConductors: params.primaryLoadedConductors,
+                ambientTemp: params.ambientTemp,
+                altitude: params.siteAltitude,
+                designStandard: params.designStandard
+            });
+
+            const secondaryCableData = calculateEnhancedParallelCableSize({
+                current: secondaryCurrent,
+                distance: secondaryDistanceM,
+                voltage: params.loadVoltage,
+                phase: params.phaseType,
+                material: params.secondaryConductorMaterial,
+                parallelCount: params.secondaryParallelCables,
+                maxCableSize: params.secondaryMaxCableSize,
+                installationMethod: params.secondaryInstallationMethod,
+                loadedConductors: params.secondaryLoadedConductors,
+                ambientTemp: params.ambientTemp,
+                altitude: params.siteAltitude,
+                designStandard: params.designStandard
+            });
+
+            // Calculate transformer impedance
+            const impedance = getTransformerImpedance(params.transformerType, transformerSize);
+
+            // Calculate fault current
+            const faultCurrent = calculateFaultCurrent(params.serviceVoltage, impedance, params.phaseType);
+
+            // Calculate efficiency
+            const efficiency = calculateTransformerEfficiency(transformerSize, params.loadKw);
+
+            // Perform compliance checking
+            const complianceResults = performComplianceChecking({
+                primaryCable: primaryCableData,
+                secondaryCable: secondaryCableData,
+                designStandard: params.designStandard,
+                transformerSize: transformerSize,
+                loadKw: params.loadKw,
+                ambientTemp: params.ambientTemp,
+                altitudeFactor: altitudeFactor
+            });
+
+            return {
+                transformerSize: transformerSize,
+                kva: finalKva,
+                baseKva: baseKva,
+                enhancedKva: enhancedKva,
+                loadTypeFactor: loadTypeFactors[params.loadType],
+                primaryCurrent: primaryCurrent,
+                secondaryCurrent: secondaryCurrent,
+                primaryCable: primaryCableData,
+                secondaryCable: secondaryCableData,
+                impedance: impedance,
+                faultCurrent: faultCurrent,
+                efficiency: efficiency,
+                altitudeFactor: altitudeFactor,
+                compliance: complianceResults,
+                calculations: {
+                    expansionMargin: params.expansionMargin,
+                    designStandard: params.designStandard,
+                    ambientTemp: params.ambientTemp,
+                    siteAltitude: params.siteAltitude
+                }
+            };
+        }
+
+        function calculateAltitudeFactor(altitude) {
+            // Linear interpolation for altitude derating
+            const altitudePoints = Object.keys(deratingFactors.altitude).map(Number).sort((a, b) => a - b);
+            
+            if (altitude <= altitudePoints[0]) return deratingFactors.altitude[altitudePoints[0]];
+            if (altitude >= altitudePoints[altitudePoints.length - 1]) return deratingFactors.altitude[altitudePoints[altitudePoints.length - 1]];
+            
+            for (let i = 0; i < altitudePoints.length - 1; i++) {
+                if (altitude >= altitudePoints[i] && altitude <= altitudePoints[i + 1]) {
+                    const factor1 = deratingFactors.altitude[altitudePoints[i]];
+                    const factor2 = deratingFactors.altitude[altitudePoints[i + 1]];
+                    const ratio = (altitude - altitudePoints[i]) / (altitudePoints[i + 1] - altitudePoints[i]);
+                    return factor1 + (factor2 - factor1) * ratio;
+                }
+            }
+            return 1.0;
+        }
+
+        function calculateEnhancedParallelCableSize(params) {
+            const standard = complianceStandards[params.designStandard];
+            const maxVD = standard.maxVoltageDrop.secondary;
+            
+            // Calculate current per cable
+            const currentPerCable = params.current / params.parallelCount;
+            
+            // Calculate temperature derating factor
+            const tempDerating = deratingFactors.temperature[Math.min(50, Math.max(40, Math.round(params.ambientTemp)))];
+            
+            // Calculate altitude derating factor
+            const altitudeDerating = calculateAltitudeFactor(params.altitude);
+            
+            // Calculate conduit fill derating based on number of loaded conductors
+            const conduitFillDerating = deratingFactors.conduitFill[Math.min(4, params.loadedConductors)];
+            
+            // Combined derating factor
+            const combinedDerating = tempDerating * altitudeDerating * conduitFillDerating;
+            
+            // Get available wire sizes for the material
+            const availableSizes = Object.keys(wireData[params.material]).map(size => ({
+                awg: size,
+                ampacity: wireData[params.material][size].ampacity,
+                resistance: wireData[params.material][size].resistance,
+                reactance: wireData[params.material][size].reactance
+            }));
+            
+            // Filter by max cable size if specified
+            let filteredSizes = availableSizes;
+            if (params.maxCableSize !== 'unlimited') {
+                const maxSizeIndex = availableSizes.findIndex(size => size.awg === params.maxCableSize);
+                if (maxSizeIndex !== -1) {
+                    filteredSizes = availableSizes.slice(0, maxSizeIndex + 1);
+                }
+            }
+            
+            // Find the smallest size that meets ampacity requirements
+            let selectedSize = null;
+            let voltageDropCompliance = false;
+            
+            for (let size of filteredSizes) {
+                const deratedAmpacity = size.ampacity * combinedDerating;
+                
+                if (deratedAmpacity >= currentPerCable) {
+                    // Calculate voltage drop
+                    const resistance = size.resistance;
+                    const reactance = size.reactance;
+                    const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                    const effectiveImpedance = impedance / params.parallelCount;
+                    
+                    let voltageDropVolts;
+                    if (params.phase === 'three') {
+                        voltageDropVolts = Math.sqrt(3) * params.current * effectiveImpedance * params.distance / 1000;
+                    } else {
+                        voltageDropVolts = 2 * params.current * resistance / params.parallelCount * params.distance / 1000;
+                    }
+                    
+                    const voltageDropPercent = (voltageDropVolts / params.voltage) * 100;
+                    
+                    selectedSize = {
+                        ...size,
+                        deratedAmpacity: deratedAmpacity,
+                        voltageDropVolts: voltageDropVolts,
+                        voltageDropPercent: voltageDropPercent,
+                        impedance: impedance,
+                        effectiveImpedance: effectiveImpedance
+                    };
+                    
+                    if (voltageDropPercent <= maxVD) {
+                        voltageDropCompliance = true;
+                        break;
+                    }
+                }
+            }
+            
+            // If no size meets voltage drop, use the largest available
+            if (!selectedSize || !voltageDropCompliance) {
+                const largestSize = filteredSizes[filteredSizes.length - 1];
+                const deratedAmpacity = largestSize.ampacity * combinedDerating;
+                const resistance = largestSize.resistance;
+                const reactance = largestSize.reactance;
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const effectiveImpedance = impedance / params.parallelCount;
+                
+                let voltageDropVolts;
+                if (params.phase === 'three') {
+                    voltageDropVolts = Math.sqrt(3) * params.current * effectiveImpedance * params.distance / 1000;
+                } else {
+                    voltageDropVolts = 2 * params.current * resistance / params.parallelCount * params.distance / 1000;
+                }
+                
+                const voltageDropPercent = (voltageDropVolts / params.voltage) * 100;
+                
+                selectedSize = {
+                    ...largestSize,
+                    deratedAmpacity: deratedAmpacity,
+                    voltageDropVolts: voltageDropVolts,
+                    voltageDropPercent: voltageDropPercent,
+                    impedance: impedance,
+                    effectiveImpedance: effectiveImpedance
+                };
+            }
+            
+            // Determine compliance status
+            let complianceStatus = 'GOOD';
+            let complianceMessage = 'All requirements met';
+            let suggestions = [];
+            
+            const totalAmpacity = selectedSize.deratedAmpacity * params.parallelCount;
+            const requiredAmpacity = params.current;
+            
+            if (totalAmpacity < requiredAmpacity) {
+                complianceStatus = 'CRITICAL';
+                complianceMessage = 'Insufficient total ampacity';
+                suggestions.push('Increase number of parallel cables');
+                suggestions.push('Use larger cable size per run');
+                suggestions.push('Improve installation conditions to reduce derating');
+            } else if (selectedSize.voltageDropPercent > maxVD) {
+                complianceStatus = 'WARNING';
+                complianceMessage = `Voltage drop exceeds ${maxVD}% limit`;
+                suggestions.push('Increase number of parallel cables');
+                suggestions.push('Use larger cable size per run');
+                suggestions.push('Reduce distance if possible');
+                suggestions.push('Consider higher voltage system');
+            } else if (selectedSize.voltageDropPercent > maxVD * 0.8) {
+                complianceStatus = 'WARNING';
+                complianceMessage = 'Voltage drop approaching limit';
+                suggestions.push('Consider larger cable size for better performance');
+                suggestions.push('Monitor for future load growth');
+            }
+            
+            return {
+                size: selectedSize.awg,
+                ampacity: selectedSize.ampacity,
+                deratedAmpacity: selectedSize.deratedAmpacity,
+                totalAmpacity: totalAmpacity,
+                currentPerCable: currentPerCable,
+                totalCurrent: params.current,
+                parallelCount: params.parallelCount,
+                voltageDropVolts: selectedSize.voltageDropVolts,
+                voltageDropPercent: selectedSize.voltageDropPercent,
+                resistance: selectedSize.resistance,
+                reactance: selectedSize.reactance,
+                impedance: selectedSize.impedance,
+                effectiveImpedance: selectedSize.effectiveImpedance,
+                complianceStatus: complianceStatus,
+                complianceMessage: complianceMessage,
+                suggestions: suggestions,
+                deratingFactors: {
+                    temperature: tempDerating,
+                    altitude: altitudeDerating,
+                    conduitFill: conduitFillDerating,
+                    combined: combinedDerating
+                },
+                voltageDropCompliance: voltageDropCompliance
+            };
+        }
+
+        function getTransformerImpedance(type, size) {
+            const impedanceData = transformerImpedance[type];
+            if (size <= 500) return impedanceData.small;
+            if (size <= 2000) return impedanceData.medium;
+            return impedanceData.large;
+        }
+
+        function calculateFaultCurrent(voltage, impedance, phase) {
+            // Simplified fault current calculation
+            // Actual fault current calculations are more complex and require system data
+            const baseKva = 10000; // Assume 10MVA base
+            const baseCurrent = phase === 'three' ? 
+                (baseKva * 1000) / (Math.sqrt(3) * voltage) :
+                (baseKva * 1000) / voltage;
+            
+            return baseCurrent / impedance;
+        }
+
+        function calculateTransformerEfficiency(kva, loadKw) {
+            // Typical transformer efficiency curves
+            const loadFactor = loadKw / kva;
+            
+            let efficiency;
+            if (loadFactor < 0.25) {
+                efficiency = 94 + loadFactor * 8; // 94% to 96%
+            } else if (loadFactor < 0.75) {
+                efficiency = 96 + (loadFactor - 0.25) * 4; // 96% to 98%
+            } else {
+                efficiency = 98 - (loadFactor - 0.75) * 2; // 98% to 97.5%
+            }
+            
+            return Math.max(90, Math.min(98.5, efficiency));
+        }
+
+        function performComplianceChecking(data) {
+            const standard = complianceStandards[data.designStandard];
+            const results = {
+                overall: 'GOOD',
+                issues: [],
+                warnings: [],
+                recommendations: []
+            };
+
+            // Check voltage drop compliance
+            if (data.primaryCable.voltageDropPercent > standard.maxVoltageDrop.primary) {
+                results.overall = 'CRITICAL';
+                results.issues.push(`Primary voltage drop (${data.primaryCable.voltageDropPercent.toFixed(2)}%) exceeds ${standard.maxVoltageDrop.primary}% limit`);
+            }
+
+            if (data.secondaryCable.voltageDropPercent > standard.maxVoltageDrop.secondary) {
+                results.overall = 'CRITICAL';
+                results.issues.push(`Secondary voltage drop (${data.secondaryCable.voltageDropPercent.toFixed(2)}%) exceeds ${standard.maxVoltageDrop.secondary}% limit`);
+            }
+
+            const totalVoltageDrop = data.primaryCable.voltageDropPercent + data.secondaryCable.voltageDropPercent;
+            if (totalVoltageDrop > standard.maxVoltageDrop.total) {
+                results.overall = 'CRITICAL';
+                results.issues.push(`Total voltage drop (${totalVoltageDrop.toFixed(2)}%) exceeds ${standard.maxVoltageDrop.total}% limit`);
+            }
+
+            // Check safety factor
+            const actualSafetyFactor = data.transformerSize / (data.loadKw / 0.85); // Assume 0.85 PF for safety factor calc
+            if (actualSafetyFactor < standard.minSafetyFactor) {
+                if (results.overall === 'GOOD') results.overall = 'WARNING';
+                results.warnings.push(`Safety factor (${actualSafetyFactor.toFixed(2)}) below recommended ${standard.minSafetyFactor}`);
+            }
+
+            // Check temperature compliance
+            if (data.ambientTemp > standard.temperatureLimit) {
+                if (results.overall === 'GOOD') results.overall = 'WARNING';
+                results.warnings.push(`Ambient temperature (${data.ambientTemp}°C) exceeds standard limit (${standard.temperatureLimit}°C)`);
+            }
+
+            // Check altitude factor
+            if (data.altitudeFactor < 0.9) {
+                results.recommendations.push('Consider altitude derating effects on equipment');
+            }
+
+            // Add recommendations based on analysis
+            if (results.overall === 'GOOD') {
+                results.recommendations.push('System design meets all requirements');
+                results.recommendations.push('Consider future load growth in final design');
+            }
+
+            return results;
+        }
+
+        function displayEnhancedResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            const html = `
+                <div class="results-grid">
+                    <!-- Transformer Results -->
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-microchip"></i>
+                            Transformer Sizing
+                        </div>
+                        <div class="result-value">${data.transformerSize} kVA</div>
+                        <div class="result-detail">
+                            Required: ${data.kva.toFixed(2)} kVA<br>
+                            Base Load: ${data.baseKva.toFixed(2)} kVA<br>
+                            With Margin: ${data.enhancedKva.toFixed(2)} kVA<br>
+                            Load Factor: ${((data.kva / data.transformerSize) * 100).toFixed(1)}%<br>
+                            Efficiency: ${data.efficiency.toFixed(1)}%
+                        </div>
+                    </div>
+
+                    <!-- Primary Current -->
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-arrow-up"></i>
+                            Primary Current
+                        </div>
+                        <div class="result-value">${data.primaryCurrent.toFixed(1)} A</div>
+                        <div class="result-detail">
+                            Service Voltage: ${document.getElementById('service_voltage').value}V<br>
+                            Phase: ${document.getElementById('phase_type').value}<br>
+                            Protection Required: ${(data.primaryCurrent * 1.25).toFixed(1)} A
+                        </div>
+                    </div>
+
+                    <!-- Secondary Current -->
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-arrow-down"></i>
+                            Secondary Current
+                        </div>
+                        <div class="result-value">${data.secondaryCurrent.toFixed(1)} A</div>
+                        <div class="result-detail">
+                            Load Voltage: ${document.getElementById('load_voltage').value}V<br>
+                            Phase: ${document.getElementById('phase_type').value}<br>
+                            Protection Required: ${(data.secondaryCurrent * 1.25).toFixed(1)} A
+                        </div>
+                    </div>
+
+                    <!-- Fault Current -->
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Fault Current
+                        </div>
+                        <div class="result-value">${(data.faultCurrent / 1000).toFixed(1)} kA</div>
+                        <div class="result-detail">
+                            Impedance: ${(data.impedance * 100).toFixed(2)}%<br>
+                            KAIC Rating Required: ${Math.ceil(data.faultCurrent / 1000)} kA<br>
+                            Type: ${document.getElementById('transformer_type').value}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Parallel Cable Analysis -->
+                <div class="parallel-cable-analysis">
+                    <h4><i class="fas fa-cable-car"></i> Enhanced Parallel Cable Analysis</h4>
+                    
+                    <!-- Primary Cable Analysis -->
+                    <div class="cable-comparison">
+                        <div class="cable-option ${data.primaryCable.complianceStatus === 'GOOD' ? 'recommended' : ''}">
+                            <h5><i class="fas fa-arrow-up"></i> Primary Cable</h5>
+                            <div class="compliance-indicator compliance-${data.primaryCable.complianceStatus.toLowerCase()}">
+                                ${getComplianceIcon(data.primaryCable.complianceStatus)} ${data.primaryCable.complianceStatus}
+                            </div>
+                            <p><strong>Size:</strong> ${data.primaryCable.size} AWG (${data.primaryCable.parallelCount} parallel)</p>
+                            <p><strong>Current:</strong> ${data.primaryCable.currentPerCable.toFixed(1)} A per cable / ${data.primaryCable.totalCurrent.toFixed(1)} A total</p>
+                            <p><strong>Ampacity:</strong> ${data.primaryCable.deratedAmpacity.toFixed(0)} A per cable / ${data.primaryCable.totalAmpacity.toFixed(0)} A total</p>
+                            <p><strong>Voltage Drop:</strong> <span class="${getVoltageDropClass(data.primaryCable.voltageDropPercent, complianceStandards[data.calculations.designStandard].maxVoltageDrop.primary)}">${data.primaryCable.voltageDropPercent.toFixed(2)}%</span> (${data.primaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                            <p><strong>Derating Factor:</strong> ${(data.primaryCable.deratingFactors.combined * 100).toFixed(0)}%</p>
+                            <p><strong>Status:</strong> ${data.primaryCable.complianceMessage}</p>
+                        </div>
+
+                        <div class="cable-option ${data.secondaryCable.complianceStatus === 'GOOD' ? 'recommended' : ''}">
+                            <h5><i class="fas fa-arrow-down"></i> Secondary Cable</h5>
+                            <div class="compliance-indicator compliance-${data.secondaryCable.complianceStatus.toLowerCase()}">
+                                ${getComplianceIcon(data.secondaryCable.complianceStatus)} ${data.secondaryCable.complianceStatus}
+                            </div>
+                            <p><strong>Size:</strong> ${data.secondaryCable.size} AWG (${data.secondaryCable.parallelCount} parallel)</p>
+                            <p><strong>Current:</strong> ${data.secondaryCable.currentPerCable.toFixed(1)} A per cable / ${data.secondaryCable.totalCurrent.toFixed(1)} A total</p>
+                            <p><strong>Ampacity:</strong> ${data.secondaryCable.deratedAmpacity.toFixed(0)} A per cable / ${data.secondaryCable.totalAmpacity.toFixed(0)} A total</p>
+                            <p><strong>Voltage Drop:</strong> <span class="${getVoltageDropClass(data.secondaryCable.voltageDropPercent, complianceStandards[data.calculations.designStandard].maxVoltageDrop.secondary)}">${data.secondaryCable.voltageDropPercent.toFixed(2)}%</span> (${data.secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                            <p><strong>Derating Factor:</strong> ${(data.secondaryCable.deratingFactors.combined * 100).toFixed(0)}%</p>
+                            <p><strong>Status:</strong> ${data.secondaryCable.complianceMessage}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compliance Results -->
+                <div class="enhancement-section">
+                    <h4><i class="fas fa-check-circle"></i> ${data.calculations.designStandard} Compliance Analysis</h4>
+                    <div class="compliance-indicator compliance-${data.compliance.overall.toLowerCase()}">
+                        ${getComplianceIcon(data.compliance.overall)} Overall Status: ${data.compliance.overall}
+                    </div>
+                    
+                    ${data.compliance.issues.length > 0 ? `
+                        <div class="error-message">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Critical Issues</h5>
+                            <ul>
+                                ${data.compliance.issues.map(issue => `<li>${issue}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.compliance.warnings.length > 0 ? `
+                        <div class="suggestions-box">
+                            <h5><i class="fas fa-exclamation"></i> Warnings</h5>
+                            <ul>
+                                ${data.compliance.warnings.map(warning => `<li>${warning}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.compliance.recommendations.length > 0 ? `
+                        <div class="suggestions-box">
+                            <h5><i class="fas fa-lightbulb"></i> Recommendations</h5>
+                            <ul>
+                                ${data.compliance.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Suggestions -->
+                ${(data.primaryCable.suggestions.length > 0 || data.secondaryCable.suggestions.length > 0) ? `
+                    <div class="suggestions-box">
+                        <h5><i class="fas fa-lightbulb"></i> Optimization Suggestions</h5>
+                        <ul>
+                            ${data.primaryCable.suggestions.map(suggestion => `<li>Primary: ${suggestion}</li>`).join('')}
+                            ${data.secondaryCable.suggestions.map(suggestion => `<li>Secondary: ${suggestion}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
+                <!-- Environmental Factors -->
+                <div class="enhancement-section">
+                    <h4><i class="fas fa-thermometer-half"></i> Environmental Impact Analysis</h4>
+                    <div class="advanced-controls">
+                        <div class="control-group">
+                            <strong>Ambient Temperature:</strong> ${data.calculations.ambientTemp}°C<br>
+                            <strong>Temperature Derating:</strong> ${(data.primaryCable.deratingFactors.temperature * 100).toFixed(0)}%
+                        </div>
+                        <div class="control-group">
+                            <strong>Site Altitude:</strong> ${data.calculations.siteAltitude}m<br>
+                            <strong>Altitude Factor:</strong> ${(data.altitudeFactor * 100).toFixed(0)}%
+                        </div>
+                        <div class="control-group">
+                            <strong>Expansion Margin:</strong> ${data.calculations.expansionMargin}%<br>
+                            <strong>Load Type Factor:</strong> ${(data.loadTypeFactor * 100).toFixed(0)}%
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'flex';
+
+            // Store results for export
+            window.lastCalculationResults = data;
+        }
+
+        function getComplianceIcon(status) {
+            const icons = {
+                'GOOD': '<i class="fas fa-check-circle"></i>',
+                'WARNING': '<i class="fas fa-exclamation-triangle"></i>',
+                'CRITICAL': '<i class="fas fa-times-circle"></i>'
+            };
+            return icons[status] || '<i class="fas fa-question-circle"></i>';
+        }
+
+        function getVoltageDropClass(actualVD, maxVD) {
+            if (actualVD <= maxVD * 0.8) return 'voltage-drop-good';
+            if (actualVD <= maxVD) return 'voltage-drop-warning';
+            return 'voltage-drop-critical';
+        }
+
+        // Enhanced PDF generation
+        function generatePDF() {
+            if (!window.lastCalculationResults) {
+                alert('Please run a calculation first');
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Title
+                doc.setFontSize(20);
+                doc.text('PwrSysPro V1.2 Complete - Calculation Report', 20, 30);
+                
+                // Project info
+                doc.setFontSize(12);
+                doc.text(`Project: ${document.getElementById('project_name').value}`, 20, 50);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 60);
+                doc.text(`Standard: ${document.getElementById('design_standard').value}`, 20, 70);
+                
+                // Results
+                const data = window.lastCalculationResults;
+                let yPos = 90;
+                
+                doc.setFontSize(14);
+                doc.text('Transformer Sizing Results:', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.text(`Selected Transformer: ${data.transformerSize} kVA`, 20, yPos);
+                doc.text(`Required kVA: ${data.kva.toFixed(2)}`, 20, yPos + 10);
+                doc.text(`Efficiency: ${data.efficiency.toFixed(1)}%`, 20, yPos + 20);
+                doc.text(`Primary Current: ${data.primaryCurrent.toFixed(1)} A`, 20, yPos + 30);
+                doc.text(`Secondary Current: ${data.secondaryCurrent.toFixed(1)} A`, 20, yPos + 40);
+                
+                yPos += 60;
+                doc.setFontSize(14);
+                doc.text('Cable Analysis:', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.text(`Primary Cable: ${data.primaryCable.size} AWG (${data.primaryCable.parallelCount} parallel)`, 20, yPos);
+                doc.text(`Primary Voltage Drop: ${data.primaryCable.voltageDropPercent.toFixed(2)}%`, 20, yPos + 10);
+                doc.text(`Secondary Cable: ${data.secondaryCable.size} AWG (${data.secondaryCable.parallelCount} parallel)`, 20, yPos + 20);
+                doc.text(`Secondary Voltage Drop: ${data.secondaryCable.voltageDropPercent.toFixed(2)}%`, 20, yPos + 30);
+                
+                // Compliance
+                yPos += 50;
+                doc.setFontSize(14);
+                doc.text('Compliance Status:', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.text(`Overall Status: ${data.compliance.overall}`, 20, yPos);
+                
+                if (data.compliance.issues.length > 0) {
+                    yPos += 20;
+                    doc.text('Critical Issues:', 20, yPos);
+                    data.compliance.issues.forEach((issue, index) => {
+                        yPos += 10;
+                        doc.text(`• ${issue}`, 25, yPos);
+                    });
+                }
+                
+                doc.save(`PwrSysPro_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+                
+                showSuccessMessage('PDF report generated successfully!');
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                showErrorMessage(['Error generating PDF. Please check your browser compatibility.']);
+            }
+        }
+
+        // Enhanced Excel generation
+        function generateExcel() {
+            if (!window.lastCalculationResults) {
+                alert('Please run a calculation first');
+                return;
+            }
+
+            try {
+                const data = window.lastCalculationResults;
+                
+                // Create workbook
+                const workbook = XLSX.utils.book_new();
+                
+                // Summary sheet
+                const summaryData = [
+                    ['PwrSysPro V1.2 Complete - Calculation Report'],
+                    ['Project:', document.getElementById('project_name').value],
+                    ['Date:', new Date().toLocaleDateString()],
+                    ['Standard:', document.getElementById('design_standard').value],
+                    [],
+                    ['Transformer Results'],
+                    ['Selected Size (kVA):', data.transformerSize],
+                    ['Required kVA:', data.kva.toFixed(2)],
+                    ['Efficiency (%):', data.efficiency.toFixed(1)],
+                    ['Primary Current (A):', data.primaryCurrent.toFixed(1)],
+                    ['Secondary Current (A):', data.secondaryCurrent.toFixed(1)],
+                    [],
+                    ['Primary Cable Analysis'],
+                    ['Cable Size:', data.primaryCable.size + ' AWG'],
+                    ['Parallel Cables:', data.primaryCable.parallelCount],
+                    ['Current per Cable (A):', data.primaryCable.currentPerCable.toFixed(1)],
+                    ['Total Ampacity (A):', data.primaryCable.totalAmpacity.toFixed(0)],
+                    ['Voltage Drop (%):', data.primaryCable.voltageDropPercent.toFixed(2)],
+                    ['Compliance Status:', data.primaryCable.complianceStatus],
+                    [],
+                    ['Secondary Cable Analysis'],
+                    ['Cable Size:', data.secondaryCable.size + ' AWG'],
+                    ['Parallel Cables:', data.secondaryCable.parallelCount],
+                    ['Current per Cable (A):', data.secondaryCable.currentPerCable.toFixed(1)],
+                    ['Total Ampacity (A):', data.secondaryCable.totalAmpacity.toFixed(0)],
+                    ['Voltage Drop (%):', data.secondaryCable.voltageDropPercent.toFixed(2)],
+                    ['Compliance Status:', data.secondaryCable.complianceStatus],
+                    [],
+                    ['Overall Compliance'],
+                    ['Status:', data.compliance.overall]
+                ];
+                
+                if (data.compliance.issues.length > 0) {
+                    summaryData.push(['Critical Issues:']);
+                    data.compliance.issues.forEach(issue => {
+                        summaryData.push(['', issue]);
+                    });
+                }
+                
+                const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+                
+                // Detailed calculations sheet
+                const detailsData = [
+                    ['Detailed Calculations'],
+                    [],
+                    ['Input Parameters'],
+                    ['Load (kW):', document.getElementById('load_kw').value],
+                    ['Power Factor:', document.getElementById('power_factor').value],
+                    ['Load Voltage (V):', document.getElementById('load_voltage').value],
+                    ['Service Voltage (V):', document.getElementById('service_voltage').value],
+                    ['Phase Type:', document.getElementById('phase_type').value],
+                    ['Load Type:', document.getElementById('load_type').value],
+                    ['Ambient Temperature (°C):', document.getElementById('ambient_temp').value],
+                    ['Site Altitude (m):', document.getElementById('site_altitude').value],
+                    ['Expansion Margin (%):', document.getElementById('expansion_margin').value],
+                    [],
+                    ['Calculation Results'],
+                    ['Base kVA:', data.baseKva.toFixed(2)],
+                    ['Enhanced kVA:', data.enhancedKva.toFixed(2)],
+                    ['Final kVA:', data.kva.toFixed(2)],
+                    ['Load Type Factor:', data.loadTypeFactor],
+                    ['Altitude Factor:', data.altitudeFactor.toFixed(3)],
+                    ['Transformer Impedance (%):', (data.impedance * 100).toFixed(2)],
+                    ['Fault Current (kA):', (data.faultCurrent / 1000).toFixed(1)]
+                ];
+                
+                const detailsSheet = XLSX.utils.aoa_to_sheet(detailsData);
+                XLSX.utils.book_append_sheet(workbook, detailsSheet, 'Details');
+                
+                // Save file
+                XLSX.writeFile(workbook, `PwrSysPro_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+                
+                showSuccessMessage('Excel report generated successfully!');
+            } catch (error) {
+                console.error('Excel generation error:', error);
+                showErrorMessage(['Error generating Excel file. Please check your browser compatibility.']);
+            }
+        }
+
+        function showSuccessMessage(message) {
+            const messageHtml = `
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i> ${message}
+                </div>
+            `;
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.insertAdjacentHTML('afterbegin', messageHtml);
+            
+            setTimeout(() => {
+                const successMsg = resultsDiv.querySelector('.success-message');
+                if (successMsg) successMsg.remove();
+            }, 5000);
+        }
+
+        function showCalculationSteps() {
+            if (!window.lastCalculationResults) {
+                alert('Please run a calculation first');
+                return;
+            }
+
+            const data = window.lastCalculationResults;
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px;">
+                    <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <h3><i class="fas fa-calculator"></i> Calculation Steps</h3>
+                    
+                    <div style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                        <h4>1. Load Analysis</h4>
+                        <p>Base kVA = Load (kW) ÷ Power Factor</p>
+                        <p>Base kVA = ${document.getElementById('load_kw').value} ÷ ${document.getElementById('power_factor').value} = ${data.baseKva.toFixed(2)} kVA</p>
+                        
+                        <p>Enhanced kVA = Base kVA × (1 + Expansion Margin)</p>
+                        <p>Enhanced kVA = ${data.baseKva.toFixed(2)} × (1 + ${data.calculations.expansionMargin}%) = ${data.enhancedKva.toFixed(2)} kVA</p>
+                        
+                        <p>Final kVA = Enhanced kVA × Load Type Factor</p>
+                        <p>Final kVA = ${data.enhancedKva.toFixed(2)} × ${data.loadTypeFactor} = ${data.kva.toFixed(2)} kVA</p>
+                        
+                        <h4>2. Transformer Selection</h4>
+                        <p>Selected next standard size: ${data.transformerSize} kVA</p>
+                        <p>Load Factor: ${((data.kva / data.transformerSize) * 100).toFixed(1)}%</p>
+                        
+                        <h4>3. Current Calculations</h4>
+                        <p>Primary Current = Transformer kVA ÷ (√3 × Primary Voltage)</p>
+                        <p>Primary Current = ${data.transformerSize} × 1000 ÷ (√3 × ${document.getElementById('service_voltage').value}) = ${data.primaryCurrent.toFixed(1)} A</p>
+                        
+                        <p>Secondary Current = Transformer kVA ÷ (√3 × Secondary Voltage)</p>
+                        <p>Secondary Current = ${data.transformerSize} × 1000 ÷ (√3 × ${document.getElementById('load_voltage').value}) = ${data.secondaryCurrent.toFixed(1)} A</p>
+                        
+                        <h4>4. Cable Sizing</h4>
+                        <p>Primary Cable: ${data.primaryCable.size} AWG (${data.primaryCable.parallelCount} parallel)</p>
+                        <p>Current per cable: ${data.primaryCable.currentPerCable.toFixed(1)} A</p>
+                        <p>Derating factor: ${(data.primaryCable.deratingFactors.combined * 100).toFixed(0)}%</p>
+                        <p>Derated ampacity: ${data.primaryCable.deratedAmpacity.toFixed(0)} A per cable</p>
+                        
+                        <p>Secondary Cable: ${data.secondaryCable.size} AWG (${data.secondaryCable.parallelCount} parallel)</p>
+                        <p>Current per cable: ${data.secondaryCable.currentPerCable.toFixed(1)} A</p>
+                        <p>Derating factor: ${(data.secondaryCable.deratingFactors.combined * 100).toFixed(0)}%</p>
+                        <p>Derated ampacity: ${data.secondaryCable.deratedAmpacity.toFixed(0)} A per cable</p>
+                        
+                        <h4>5. Voltage Drop Analysis</h4>
+                        <p>Primary voltage drop: ${data.primaryCable.voltageDropPercent.toFixed(2)}% (${data.primaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                        <p>Secondary voltage drop: ${data.secondaryCable.voltageDropPercent.toFixed(2)}% (${data.secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
+                        <p>Total voltage drop: ${(data.primaryCable.voltageDropPercent + data.secondaryCable.voltageDropPercent).toFixed(2)}%</p>
+                        
+                        <h4>6. Compliance Check</h4>
+                        <p>Design Standard: ${data.calculations.designStandard}</p>
+                        <p>Overall Status: ${data.compliance.overall}</p>
+                        ${data.compliance.issues.length > 0 ? `<p style="color: red;">Issues: ${data.compliance.issues.join('; ')}</p>` : ''}
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Project management functions
+        function newProject() {
+            if (confirm('Are you sure you want to start a new project? Any unsaved changes will be lost.')) {
+                // Reset all form fields
+                const form = document.querySelector('.form-section');
+                const inputs = form.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = input.defaultValue || '';
+                    }
+                });
+                
+                // Reset to defaults
+                document.getElementById('project_name').value = 'Untitled Project';
+                document.getElementById('power_factor').value = '0.85';
+                document.getElementById('ambient_temp').value = '40';
+                document.getElementById('site_altitude').value = '0';
+                document.getElementById('expansion_margin').value = '25';
+                document.getElementById('primary_parallel_cables').value = '1';
+                document.getElementById('secondary_parallel_cables').value = '1';
+                
+                // Hide results
+                document.getElementById('placeholder').style.display = 'block';
+                document.getElementById('results').style.display = 'none';
+                document.getElementById('actionButtons').style.display = 'none';
+                
+                // Reset project data
+                currentProject = {
+                    name: 'Untitled Project',
+                    data: {},
+                    lastModified: new Date()
+                };
+                
+                updateProgress();
+                localStorage.removeItem('pwrsyspro_autosave');
+            }
+        }
+
+        function saveProject() {
+            document.getElementById('saveProjectName').value = currentProject.name;
+            document.getElementById('saveModal').style.display = 'block';
+        }
+
+        function confirmSaveProject() {
+            const projectName = document.getElementById('saveProjectName').value.trim();
+            const projectDescription = document.getElementById('saveProjectDescription').value.trim();
+            
+            if (!projectName) {
+                alert('Please enter a project name');
+                return;
+            }
+            
+            const projectData = {
+                name: projectName,
+                description: projectDescription,
+                data: getFormData(),
+                lastModified: new Date(),
+                results: window.lastCalculationResults || null
+            };
+            
+            let projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            
+            // Check if project exists
+            const existingIndex = projects.findIndex(p => p.name === projectName);
+            if (existingIndex !== -1) {
+                if (confirm('A project with this name already exists. Do you want to overwrite it?')) {
+                    projects[existingIndex] = projectData;
+                } else {
+                    return;
+                }
+            } else {
+                projects.push(projectData);
+            }
+            
+            localStorage.setItem('pwrsyspro_projects', JSON.stringify(projects));
+            currentProject = projectData;
+            
+            closeSaveModal();
+            showSuccessMessage(`Project "${projectName}" saved successfully!`);
+        }
+
+        function getFormData() {
+            const formData = {};
+            const inputs = document.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                if (input.id) {
+                    formData[input.id] = input.value;
+                }
+            });
+            
+            return formData;
+        }
+
+        function showLoadModal() {
+            loadProjectList();
+            document.getElementById('loadModal').style.display = 'block';
+        }
+
+        function loadProjectList() {
+            const projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            const listDiv = document.getElementById('projectList');
+            
+            if (projects.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #6c757d;">No saved projects found</p>';
+                return;
+            }
+            
+            listDiv.innerHTML = projects.map(project => `
+                <div class="project-item" onclick="loadProject('${project.name}')">
+                    <h4>${project.name}</h4>
+                    <p>${project.description || 'No description'}</p>
+                    <small>Last modified: ${new Date(project.lastModified).toLocaleDateString()}</small>
+                    <div style="margin-top: 0.5rem;">
+                        <button class="btn" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 12px;" 
+                                onclick="event.stopPropagation(); deleteProject('${project.name}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadProject(projectName) {
+            const projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            const project = projects.find(p => p.name === projectName);
+            
+            if (!project) {
+                alert('Project not found');
+                return;
+            }
+            
+            // Load form data
+            Object.keys(project.data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = project.data[key];
+                    if (element.tagName === 'SELECT') {
+                        element.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+            
+            // Load results if available
+            if (project.results) {
+                window.lastCalculationResults = project.results;
+                displayEnhancedResults(project.results);
+            }
+            
+            currentProject = project;
+            closeLoadModal();
+            updateProgress();
+            
+            showSuccessMessage(`Project "${projectName}" loaded successfully!`);
+        }
+
+        function deleteProject(projectName) {
+            if (confirm(`Are you sure you want to delete project "${projectName}"?`)) {
+                let projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+                projects = projects.filter(p => p.name !== projectName);
+                localStorage.setItem('pwrsyspro_projects', JSON.stringify(projects));
+                loadProjectList();
+                showSuccessMessage(`Project "${projectName}" deleted successfully!`);
+            }
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = 'none';
+        }
+
+        function closeLoadModal() {
+            document.getElementById('loadModal').style.display = 'none';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveProject();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        showLoadModal();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        newProject();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        calculateSizing();
+                        break;
+                }
+            }
+        });
+
+        // Fix resistance data (there was a typo in the original wireData)
+        wireData.copper['10'].resistance = 1.21;
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

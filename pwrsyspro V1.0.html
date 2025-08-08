@@ -596,6 +596,283 @@
             '900': 0.037, '1000': 0.036
         };
 
+        // Enhanced conductor database with NEC ampacities and extended sizes
+        const enhancedConductorData = [
+            {awg: '14', ampacity: 20, area: 2082}, {awg: '12', ampacity: 25, area: 3309}, 
+            {awg: '10', ampacity: 35, area: 5261}, {awg: '8', ampacity: 50, area: 8367},
+            {awg: '6', ampacity: 65, area: 13300}, {awg: '4', ampacity: 85, area: 21150},
+            {awg: '3', ampacity: 100, area: 26670}, {awg: '2', ampacity: 115, area: 33630},
+            {awg: '1', ampacity: 130, area: 42410}, {awg: '1/0', ampacity: 150, area: 53480},
+            {awg: '2/0', ampacity: 175, area: 67430}, {awg: '3/0', ampacity: 200, area: 85010},
+            {awg: '4/0', ampacity: 230, area: 107200}, {awg: '250', ampacity: 255, area: 127000},
+            {awg: '300', ampacity: 285, area: 152000}, {awg: '350', ampacity: 310, area: 177000},
+            {awg: '400', ampacity: 335, area: 203000}, {awg: '500', ampacity: 380, area: 254000},
+            {awg: '600', ampacity: 420, area: 304000}, {awg: '700', ampacity: 460, area: 355000},
+            {awg: '750', ampacity: 475, area: 380000}, {awg: '800', ampacity: 490, area: 406000},
+            {awg: '900', ampacity: 520, area: 456000}, {awg: '1000', ampacity: 545, area: 507000},
+            {awg: '1250', ampacity: 590, area: 634000}, {awg: '1500', ampacity: 625, area: 760000},
+            {awg: '1750', ampacity: 650, area: 887000}, {awg: '2000', ampacity: 665, area: 1013000}
+        ];
+
+        // Enhanced wire resistance data including larger sizes (ohms per 1000 feet)
+        const enhancedWireResistance = {
+            copper: {
+                '14': 3.07, '12': 1.93, '10': 1.21, '8': 0.764, '6': 0.491, '4': 0.308,
+                '3': 0.245, '2': 0.194, '1': 0.154, '1/0': 0.122, '2/0': 0.0967,
+                '3/0': 0.0766, '4/0': 0.0608, '250': 0.0515, '300': 0.0429,
+                '350': 0.0367, '400': 0.0321, '500': 0.0258, '600': 0.0214,
+                '700': 0.0184, '750': 0.0171, '800': 0.0161, '900': 0.0143,
+                '1000': 0.0129, '1250': 0.0103, '1500': 0.0086, '1750': 0.0074, '2000': 0.0065
+            },
+            aluminum: {
+                '12': 3.18, '10': 2.00, '8': 1.26, '6': 0.808, '4': 0.508,
+                '3': 0.403, '2': 0.319, '1': 0.253, '1/0': 0.201, '2/0': 0.159,
+                '3/0': 0.126, '4/0': 0.100, '250': 0.0847, '300': 0.0706,
+                '350': 0.0605, '400': 0.0529, '500': 0.0424, '600': 0.0353,
+                '700': 0.0302, '750': 0.0282, '800': 0.0265, '900': 0.0235,
+                '1000': 0.0212, '1250': 0.0169, '1500': 0.0141, '1750': 0.0121, '2000': 0.0106
+            }
+        };
+
+        // Enhanced wire reactance data including larger sizes (ohms per 1000 feet)
+        const enhancedWireReactance = {
+            '14': 0.058, '12': 0.057, '10': 0.055, '8': 0.052, '6': 0.051,
+            '4': 0.048, '3': 0.047, '2': 0.046, '1': 0.045, '1/0': 0.044,
+            '2/0': 0.043, '3/0': 0.042, '4/0': 0.041, '250': 0.041,
+            '300': 0.040, '350': 0.040, '400': 0.039, '500': 0.039,
+            '600': 0.038, '700': 0.038, '750': 0.037, '800': 0.037,
+            '900': 0.037, '1000': 0.036, '1250': 0.035, '1500': 0.034, 
+            '1750': 0.033, '2000': 0.032
+        };
+
+        // NEC derating factors for temperature correction (NEC 310.15(B)(2)(a))
+        const temperatureDerating = {
+            30: 1.15, 35: 1.08, 40: 1.00, 45: 0.91, 50: 0.82, 
+            55: 0.71, 60: 0.58, 65: 0.41, 70: 0.00
+        };
+
+        // NEC adjustment factors for bundled conductors (NEC 310.15(B)(3)(a))
+        const bundleAdjustment = {
+            3: 1.00, 4: 0.80, 5: 0.80, 6: 0.80, 
+            7: 0.70, 8: 0.70, 9: 0.70, 10: 0.50
+        };
+
+        // Enhanced cable sizing function with NEC 240.4 compliance and parallel conductor support
+        function calculateEnhancedCableSize(current, ocpdRating, distance, voltage, phase, material, maxVD, ambientTemp = 40, bundledConductors = 3) {
+            // Apply temperature derating
+            let tempFactor = 1.0;
+            for (let temp in temperatureDerating) {
+                if (ambientTemp <= parseInt(temp)) {
+                    tempFactor = temperatureDerating[temp];
+                    break;
+                }
+            }
+
+            // Apply bundling adjustment
+            const bundleFactor = bundleAdjustment[Math.min(bundledConductors, 10)] || 0.50;
+
+            // Calculate required base ampacity per NEC 240.4(B)
+            // Base ampacity must be >= OCPD rating BEFORE applying derating
+            const requiredBaseAmpacity = Math.max(current, ocpdRating);
+
+            // Try single conductor first
+            let singleConductorSolution = findSingleConductor(requiredBaseAmpacity, current, distance, voltage, phase, material, maxVD, tempFactor, bundleFactor);
+            
+            if (singleConductorSolution.isValid) {
+                return {
+                    ...singleConductorSolution,
+                    parallelCount: 1,
+                    necCompliant: true,
+                    reasoning: `Single conductor meets NEC 240.4: ${singleConductorSolution.baseAmpacity}A base ≥ ${ocpdRating}A OCPD`
+                };
+            }
+
+            // If single conductor fails, calculate parallel conductors
+            return calculateParallelConductors(requiredBaseAmpacity, current, distance, voltage, phase, material, maxVD, tempFactor, bundleFactor, ocpdRating);
+        }
+
+        function findSingleConductor(requiredBaseAmpacity, current, distance, voltage, phase, material, maxVD, tempFactor, bundleFactor) {
+            // Find conductor with base ampacity >= required
+            const conductor = enhancedConductorData.find(size => size.ampacity >= requiredBaseAmpacity);
+            
+            if (!conductor) {
+                return { isValid: false, reason: 'No single conductor available with sufficient base ampacity' };
+            }
+
+            // Check if derated ampacity meets load current
+            const deratedAmpacity = conductor.ampacity * tempFactor * bundleFactor;
+            if (deratedAmpacity < current) {
+                return { isValid: false, reason: 'Derated ampacity insufficient for load current' };
+            }
+
+            // Check voltage drop
+            const resistance = enhancedWireResistance[material][conductor.awg];
+            const reactance = enhancedWireReactance[conductor.awg];
+            
+            if (!resistance || !reactance) {
+                return { isValid: false, reason: 'Resistance/reactance data not available' };
+            }
+
+            const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+            const voltageDropVolts = phase === 'three' ? 
+                (Math.sqrt(3) * current * impedance * distance / 1000) :
+                (2 * current * resistance * distance / 1000);
+            const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+            if (voltageDropPercent <= maxVD) {
+                return {
+                    isValid: true,
+                    conductor: conductor,
+                    baseAmpacity: conductor.ampacity,
+                    deratedAmpacity: deratedAmpacity,
+                    resistance: resistance,
+                    reactance: reactance,
+                    voltageDrop: voltageDropPercent,
+                    voltageDropVolts: voltageDropVolts
+                };
+            }
+
+            return { isValid: false, reason: 'Voltage drop exceeds limit' };
+        }
+
+        function calculateParallelConductors(requiredBaseAmpacity, current, distance, voltage, phase, material, maxVD, tempFactor, bundleFactor, ocpdRating) {
+            // Start with largest single conductor and work backwards for efficiency
+            const sortedConductors = [...enhancedConductorData].reverse();
+            
+            for (let conductor of sortedConductors) {
+                // Skip if conductor is too small for parallel use (typically 1/0 AWG minimum)
+                if (conductor.ampacity < 150) continue;
+
+                // Calculate minimum number of parallel conductors needed
+                const minParallelForAmpacity = Math.ceil(requiredBaseAmpacity / conductor.ampacity);
+                const minParallelForCurrent = Math.ceil(current / (conductor.ampacity * tempFactor * bundleFactor));
+                const minParallel = Math.max(minParallelForAmpacity, minParallelForCurrent);
+
+                // Check up to 6 parallel conductors (practical limit)
+                for (let parallelCount = minParallel; parallelCount <= 6; parallelCount++) {
+                    const totalBaseAmpacity = conductor.ampacity * parallelCount;
+                    const totalDeratedAmpacity = totalBaseAmpacity * tempFactor * bundleFactor;
+
+                    // Check NEC 240.4 compliance
+                    if (totalBaseAmpacity < ocpdRating) continue;
+
+                    // Check load current capacity
+                    if (totalDeratedAmpacity < current) continue;
+
+                    // Check voltage drop for parallel conductors
+                    const resistance = enhancedWireResistance[material][conductor.awg];
+                    const reactance = enhancedWireReactance[conductor.awg];
+                    
+                    if (!resistance || !reactance) continue;
+
+                    const parallelResistance = resistance / parallelCount;
+                    const parallelReactance = reactance / parallelCount;
+                    const impedance = Math.sqrt(parallelResistance * parallelResistance + parallelReactance * parallelReactance);
+                    
+                    const voltageDropVolts = phase === 'three' ? 
+                        (Math.sqrt(3) * current * impedance * distance / 1000) :
+                        (2 * current * parallelResistance * distance / 1000);
+                    const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+                    if (voltageDropPercent <= maxVD) {
+                        return {
+                            isValid: true,
+                            parallelCount: parallelCount,
+                            conductor: conductor,
+                            baseAmpacity: conductor.ampacity,
+                            totalBaseAmpacity: totalBaseAmpacity,
+                            deratedAmpacity: conductor.ampacity * tempFactor * bundleFactor,
+                            totalDeratedAmpacity: totalDeratedAmpacity,
+                            resistance: parallelResistance,
+                            reactance: parallelReactance,
+                            voltageDrop: voltageDropPercent,
+                            voltageDropVolts: voltageDropVolts,
+                            necCompliant: true,
+                            reasoning: `${parallelCount} parallel conductors: ${totalBaseAmpacity}A total base ≥ ${ocpdRating}A OCPD`
+                        };
+                    }
+                }
+            }
+
+            // If no solution found within voltage drop limits, return the minimum required solution
+            // Use the largest available conductor to minimize the number of parallel runs
+            const largestConductor = enhancedConductorData[enhancedConductorData.length - 1];
+            const minParallel = Math.ceil(requiredBaseAmpacity / largestConductor.ampacity);
+            const totalBaseAmpacity = largestConductor.ampacity * minParallel;
+            const totalDeratedAmpacity = totalBaseAmpacity * tempFactor * bundleFactor;
+            
+            // Calculate voltage drop for this configuration
+            const resistance = enhancedWireResistance[material][largestConductor.awg];
+            const reactance = enhancedWireReactance[largestConductor.awg];
+            const parallelResistance = resistance / minParallel;
+            const parallelReactance = reactance / minParallel;
+            const impedance = Math.sqrt(parallelResistance * parallelResistance + parallelReactance * parallelReactance);
+            
+            const voltageDropVolts = phase === 'three' ? 
+                (Math.sqrt(3) * current * impedance * distance / 1000) :
+                (2 * current * parallelResistance * distance / 1000);
+            const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+            
+            return {
+                isValid: voltageDropPercent <= maxVD,
+                parallelCount: minParallel,
+                conductor: largestConductor,
+                baseAmpacity: largestConductor.ampacity,
+                totalBaseAmpacity: totalBaseAmpacity,
+                deratedAmpacity: largestConductor.ampacity * tempFactor * bundleFactor,
+                totalDeratedAmpacity: totalDeratedAmpacity,
+                resistance: parallelResistance,
+                reactance: parallelReactance,
+                voltageDrop: voltageDropPercent,
+                voltageDropVolts: voltageDropVolts,
+                necCompliant: totalBaseAmpacity >= ocpdRating,
+                reasoning: totalBaseAmpacity >= ocpdRating ? 
+                    `${minParallel} parallel conductors: ${totalBaseAmpacity}A total base ≥ ${ocpdRating}A OCPD` :
+                    `Insufficient base ampacity: ${totalBaseAmpacity}A < ${ocpdRating}A OCPD`,
+                recommendation: voltageDropPercent > maxVD ? 
+                    'Consider reducing distance, increasing voltage, or using multiple parallel runs in separate conduits' : ''
+            };
+        }
+
+        // Helper function to format enhanced cable results for display compatibility
+        function formatEnhancedCableResults(enhancedResult) {
+            if (!enhancedResult.isValid && !enhancedResult.conductor) {
+                return {
+                    size: 'Not Available',
+                    ampacity: 0,
+                    resistance: 0,
+                    reactance: 0,
+                    voltageDrop: 100,
+                    voltageDropVolts: 0,
+                    necCompliant: false
+                };
+            }
+
+            const parallelCount = enhancedResult.parallelCount || 1;
+            const conductor = enhancedResult.conductor;
+            
+            let sizeDescription;
+            if (parallelCount === 1) {
+                sizeDescription = `${conductor.awg} AWG`;
+            } else {
+                sizeDescription = `${parallelCount} × ${conductor.awg} kcmil (parallel)`;
+            }
+
+            return {
+                size: sizeDescription,
+                ampacity: enhancedResult.totalDeratedAmpacity || enhancedResult.deratedAmpacity || conductor.ampacity,
+                baseAmpacity: enhancedResult.totalBaseAmpacity || enhancedResult.baseAmpacity || conductor.ampacity,
+                resistance: enhancedResult.resistance || 0,
+                reactance: enhancedResult.reactance || 0,
+                voltageDrop: enhancedResult.voltageDrop || 0,
+                voltageDropVolts: enhancedResult.voltageDropVolts || 0,
+                necCompliant: enhancedResult.necCompliant || false,
+                reasoning: enhancedResult.reasoning || '',
+                recommendation: enhancedResult.recommendation || '',
+                parallelCount: parallelCount
+            };
+        }
+
         // Progressive form filling indicator
         function updateProgress() {
             const inputs = document.querySelectorAll('input[required], select');
@@ -734,7 +1011,8 @@
 
             // Cable sizing with voltage drop consideration
             const primaryCable = calculateCableSize(flc_primary * 1.25, primary_dist_ft, service_voltage, phase, conductor_material, max_vd_primary);
-            const secondaryCable = calculateCableSize(flc_secondary * 1.25, secondary_dist_ft, load_voltage, phase, conductor_material, max_vd_secondary);
+            const secondaryCableRaw = calculateEnhancedCableSize(flc_secondary * 1.25, ocpd_secondary, secondary_dist_ft, load_voltage, phase, conductor_material, max_vd_secondary, ambient_temp);
+            const secondaryCable = formatEnhancedCableResults(secondaryCableRaw);
 
             // Efficiency calculation
             const efficiency = calculateEfficiency(transformer_size, load_kw / transformer_size);
@@ -809,8 +1087,12 @@
                             <h4><i class="fas fa-arrow-down"></i> Secondary Cable</h4>
                             <p><strong>Size:</strong> ${secondaryCable.size}</p>
                             <p><strong>Voltage Drop:</strong> ${secondaryCable.voltageDrop.toFixed(2)}% (${secondaryCable.voltageDropVolts.toFixed(1)}V)</p>
-                            <p><strong>Current Capacity:</strong> ${secondaryCable.ampacity} A</p>
+                            <p><strong>Current Capacity:</strong> ${secondaryCable.ampacity} A ${secondaryCable.parallelCount > 1 ? '(total)' : ''}</p>
+                            ${secondaryCable.parallelCount > 1 ? `<p><strong>Base Ampacity:</strong> ${secondaryCable.baseAmpacity} A (total)</p>` : ''}
+                            <p><strong>NEC 240.4 Compliance:</strong> ${secondaryCable.necCompliant ? '✓ Compliant' : '✗ Non-Compliant'}</p>
+                            ${secondaryCable.reasoning ? `<p><strong>NEC Analysis:</strong> ${secondaryCable.reasoning}</p>` : ''}
                             <p><strong>Status:</strong> ${getVoltageDropStatus(secondaryCable.voltageDrop, max_vd_secondary)}</p>
+                            ${secondaryCable.recommendation ? `<p><strong>Recommendation:</strong> ${secondaryCable.recommendation}</p>` : ''}
                         </div>
                     </div>
                 </div>
@@ -864,6 +1146,13 @@
                 </div>`;
             }
 
+            if (!secondaryCable.necCompliant) {
+                warnings += `<div class="warning-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Secondary cable does not comply with NEC 240.4(B). Base ampacity must be ≥ OCPD rating before derating.
+                </div>`;
+            }
+
             document.getElementById('placeholder').style.display = 'none';
             document.getElementById('results').innerHTML = warnings + results;
             document.getElementById('results').classList.add('show');
@@ -909,18 +1198,24 @@
                 </div>
                 
                 <div class="step">
-                    <strong>6. Voltage Drop Analysis:</strong><br>
+                    <strong>6. Enhanced Cable Sizing & NEC Analysis:</strong><br>
                     <strong>Primary Cable:</strong><br>
                     Distance: ${primary_distance} ${distance_unit} (${primary_dist_ft.toFixed(0)} ft)<br>
                     Current: ${(flc_primary * 1.25).toFixed(2)} A<br>
                     Resistance: ${primaryCable.resistance.toFixed(4)} Ω/1000ft<br>
                     Voltage Drop = ${primaryCable.voltageDropVolts.toFixed(1)}V (${primaryCable.voltageDrop.toFixed(2)}%)<br>
                     <br>
-                    <strong>Secondary Cable:</strong><br>
+                    <strong>Secondary Cable (Enhanced NEC Analysis):</strong><br>
                     Distance: ${secondary_distance} ${distance_unit} (${secondary_dist_ft.toFixed(0)} ft)<br>
-                    Current: ${(flc_secondary * 1.25).toFixed(2)} A<br>
-                    Resistance: ${secondaryCable.resistance.toFixed(4)} Ω/1000ft<br>
-                    Voltage Drop = ${secondaryCable.voltageDropVolts.toFixed(1)}V (${secondaryCable.voltageDrop.toFixed(2)}%)
+                    Load Current: ${(flc_secondary * 1.25).toFixed(2)} A<br>
+                    OCPD Rating: ${ocpd_secondary} A<br>
+                    Selected: ${secondaryCable.size}<br>
+                    ${secondaryCable.parallelCount > 1 ? `Parallel Configuration: ${secondaryCable.parallelCount} conductors<br>` : ''}
+                    Base Ampacity: ${secondaryCable.baseAmpacity || 'N/A'} A<br>
+                    NEC 240.4 Compliance: ${secondaryCable.necCompliant ? 'PASS' : 'FAIL'}<br>
+                    Resistance: ${secondaryCable.resistance.toFixed(4)} Ω/1000ft ${secondaryCable.parallelCount > 1 ? '(parallel equivalent)' : ''}<br>
+                    Voltage Drop = ${secondaryCable.voltageDropVolts.toFixed(1)}V (${secondaryCable.voltageDrop.toFixed(2)}%)<br>
+                    ${secondaryCable.reasoning ? `Analysis: ${secondaryCable.reasoning}` : ''}
                 </div>
                 
                 <div class="step">

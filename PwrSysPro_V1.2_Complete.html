@@ -1,0 +1,2691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PwrSysPro V1.1 - Advanced Transformer Sizing Tool</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .project-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .version-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .input-group.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            margin-top: 1rem;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 100px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .results-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .results-content.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #f8f9ff, #e3f2fd);
+            border: 1px solid #667eea;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-detail {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .voltage-drop-card {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 1px solid #28a745;
+        }
+
+        .voltage-drop-warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+        }
+
+        .voltage-drop-critical {
+            background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+            border: 1px solid #dc3545;
+        }
+
+        .compliance-status {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .compliance-good {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .compliance-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .compliance-critical {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1aeb5;
+        }
+
+        .parallel-cable-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .parallel-cable-info .info-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestion-box {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .suggestion-box .suggestion-title {
+            font-weight: 600;
+            color: #f57c00;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .calculation-steps {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(248, 249, 250, 0.95);
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .calculation-steps.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 2rem;
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-tooltip {
+            position: relative;
+            cursor: help;
+            color: #667eea;
+        }
+
+        .info-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            max-width: 200px;
+            white-space: normal;
+            text-align: center;
+        }
+
+        .progress-indicator {
+            width: 100%;
+            height: 4px;
+            background: #e1e8ed;
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .project-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+
+        .project-item {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .project-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .project-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+
+        .project-item p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .results-panel {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+
+            .input-group.three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .subsection-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #e1e8ed;
+            padding-bottom: 0.5rem;
+        }
+
+        .load-category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .load-category-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .load-category-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .load-category-card.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-inputs {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .category-inputs input {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .compliance-status {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            margin: 0.5rem 0;
+        }
+
+        .compliance-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .compliance-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .compliance-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .nec-warning-card {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .nec-warning-card .warning-title {
+            font-weight: 600;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .enhanced-features {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .auto-save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="logo-text">PwrSysPro</div>
+                    <div style="color: #6c757d; font-size: 14px;">Advanced Transformer Sizing</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="project-btn btn-new" onclick="newProject()">
+                    <i class="fas fa-file"></i>
+                    New
+                </button>
+                <button class="project-btn btn-save" onclick="saveProject()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+                <button class="project-btn btn-load" onclick="showLoadModal()">
+                    <i class="fas fa-folder-open"></i>
+                    Load
+                </button>
+                <div class="version-badge">v1.2 Complete Enhanced</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-grid">
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    System Configuration
+                </h2>
+                
+                <div class="progress-indicator">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+
+                <form id="sizingForm">
+                    <div class="input-group full-width">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-tag"></i>
+                                Project Name
+                            </label>
+                            <input type="text" id="project_name" placeholder="Enter project name" value="Untitled Project">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-plug"></i>
+                                Total Load (kW)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Total connected load in kilowatts"></i>
+                            </label>
+                            <input type="number" id="load_kw" required step="0.1" min="0.1">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-wave-square"></i>
+                                Power Factor
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Ratio of real power to apparent power (0.1-1.0)"></i>
+                            </label>
+                            <input type="number" id="power_factor" required step="0.01" min="0.1" max="1.0" value="0.85">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-bolt"></i>
+                                Load Voltage (V)
+                            </label>
+                            <select id="load_voltage">
+                                <option value="120">120V</option>
+                                <option value="208">208V</option>
+                                <option value="240">240V</option>
+                                <option value="277">277V</option>
+                                <option value="480" selected>480V</option>
+                                <option value="600">600V</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="number" id="custom_load_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-sitemap"></i>
+                                Phase Type
+                            </label>
+                            <select id="phase_type">
+                                <option value="single">Single-phase</option>
+                                <option value="three" selected>Three-phase</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-industry"></i>
+                                Load Type
+                            </label>
+                            <select id="load_type">
+                                <option value="continuous" selected>Continuous</option>
+                                <option value="motor">Motor Load</option>
+                                <option value="mixed">Mixed Load</option>
+                                <option value="lighting">Lighting</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-home"></i>
+                                Service Voltage (V)
+                            </label>
+                            <select id="service_voltage">
+                                <option value="4160">4.16 kV</option>
+                                <option value="12470" selected>12.47 kV</option>
+                                <option value="13800">13.8 kV</option>
+                                <option value="25000">25 kV</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="number" id="custom_service_voltage" style="display:none; margin-top:0.5rem;" placeholder="Enter custom voltage">
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">
+                        <i class="fas fa-th-large"></i>
+                        Load Categories & Demand Factors
+                    </h3>
+
+                    <div class="load-category-grid">
+                        <div class="load-category-card" id="motor-category">
+                            <div class="category-header">
+                                <i class="fas fa-cog"></i>
+                                Motor Loads
+                            </div>
+                            <div class="category-inputs">
+                                <input type="number" id="motor_load" placeholder="Load (kW)" min="0" step="0.1">
+                                <input type="number" id="motor_demand" placeholder="Demand Factor (%)" min="0" max="100" value="100" step="1">
+                                <small>Safety Factor: 125%</small>
+                            </div>
+                        </div>
+
+                        <div class="load-category-card" id="lighting-category">
+                            <div class="category-header">
+                                <i class="fas fa-lightbulb"></i>
+                                Lighting Loads
+                            </div>
+                            <div class="category-inputs">
+                                <input type="number" id="lighting_load" placeholder="Load (kW)" min="0" step="0.1">
+                                <input type="number" id="lighting_demand" placeholder="Demand Factor (%)" min="0" max="100" value="100" step="1">
+                                <small>Safety Factor: 110%</small>
+                            </div>
+                        </div>
+
+                        <div class="load-category-card" id="receptacle-category">
+                            <div class="category-header">
+                                <i class="fas fa-plug"></i>
+                                Receptacle Loads
+                            </div>
+                            <div class="category-inputs">
+                                <input type="number" id="receptacle_load" placeholder="Load (kW)" min="0" step="0.1">
+                                <input type="number" id="receptacle_demand" placeholder="Demand Factor (%)" min="0" max="100" value="50" step="1">
+                                <small>Safety Factor: 115%</small>
+                            </div>
+                        </div>
+
+                        <div class="load-category-card" id="hvac-category">
+                            <div class="category-header">
+                                <i class="fas fa-snowflake"></i>
+                                HVAC Loads
+                            </div>
+                            <div class="category-inputs">
+                                <input type="number" id="hvac_load" placeholder="Load (kW)" min="0" step="0.1">
+                                <input type="number" id="hvac_demand" placeholder="Demand Factor (%)" min="0" max="100" value="100" step="1">
+                                <small>Safety Factor: 125%</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-calculator"></i>
+                                Total Calculated Load (kW)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Automatically calculated from individual load categories"></i>
+                            </label>
+                            <input type="number" id="total_calculated_load" readonly style="background: #f8f9fa;">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-percentage"></i>
+                                Overall Demand Factor (%)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Weighted average demand factor"></i>
+                            </label>
+                            <input type="number" id="overall_demand_factor" readonly style="background: #f8f9fa;">
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">
+                        <i class="fas fa-ruler"></i>
+                        Distance & Environmental
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-mountain"></i>
+                                Site Altitude (meters)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Altitude above sea level - affects derating above 1000m"></i>
+                            </label>
+                            <input type="number" id="site_altitude" min="0" max="5000" value="0" step="10">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-expand-arrows-alt"></i>
+                                Future Expansion Margin (%)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Additional capacity for future load growth"></i>
+                            </label>
+                            <input type="number" id="expansion_margin" min="0" max="100" value="25" step="5">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                Primary Distance
+                            </label>
+                            <input type="number" id="primary_distance" required min="0" value="100">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                Secondary Distance
+                            </label>
+                            <input type="number" id="secondary_distance" required min="0" value="50">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-ruler-combined"></i>
+                                Distance Unit
+                            </label>
+                            <select id="distance_unit">
+                                <option value="feet" selected>Feet</option>
+                                <option value="meters">Meters</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-thermometer-half"></i>
+                                Ambient Temperature (°C)
+                            </label>
+                            <input type="number" id="ambient_temp" required value="40" min="-40" max="60">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-percentage"></i>
+                                Max Voltage Drop - Primary (%)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Maximum allowable voltage drop for primary conductors (NEC: 3%)"></i>
+                            </label>
+                            <input type="number" id="max_vd_primary" step="0.1" min="0.1" max="10" value="3.0">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-percentage"></i>
+                                Max Voltage Drop - Secondary (%)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Maximum allowable voltage drop for secondary conductors (NEC: 5%)"></i>
+                            </label>
+                            <input type="number" id="max_vd_secondary" step="0.1" min="0.1" max="10" value="5.0">
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">
+                        <i class="fas fa-tools"></i>
+                        Primary Cable Configuration
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Number of Parallel Cables
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Number of parallel cable runs for primary side (1 for single cable)"></i>
+                            </label>
+                            <input type="number" id="primary_parallel_cables" required min="1" max="6" value="1">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-ruler"></i>
+                                Max Cable Size per Run
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Maximum allowable cable size per parallel run"></i>
+                            </label>
+                            <select id="primary_max_cable_size">
+                                <option value="1000">1000 MCM</option>
+                                <option value="900">900 MCM</option>
+                                <option value="800">800 MCM</option>
+                                <option value="750">750 MCM</option>
+                                <option value="700">700 MCM</option>
+                                <option value="600">600 MCM</option>
+                                <option value="500" selected>500 MCM</option>
+                                <option value="400">400 MCM</option>
+                                <option value="350">350 MCM</option>
+                                <option value="300">300 MCM</option>
+                                <option value="250">250 MCM</option>
+                                <option value="4/0">4/0 AWG</option>
+                                <option value="3/0">3/0 AWG</option>
+                                <option value="2/0">2/0 AWG</option>
+                                <option value="1/0">1/0 AWG</option>
+                                <option value="1">1 AWG</option>
+                                <option value="2">2 AWG</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-atom"></i>
+                                Primary Conductor Material
+                            </label>
+                            <select id="primary_conductor_material">
+                                <option value="copper" selected>Copper</option>
+                                <option value="aluminum">Aluminum</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-shield-alt"></i>
+                                Primary Insulation Type
+                            </label>
+                            <select id="primary_insulation_type">
+                                <option value="THHN" selected>THHN</option>
+                                <option value="XHHW">XHHW</option>
+                                <option value="XLPE">XLPE</option>
+                                <option value="PVC">PVC</option>
+                                <option value="EPR">EPR</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-wrench"></i>
+                                Primary Installation Method
+                            </label>
+                            <select id="primary_installation_method">
+                                <option value="conduit" selected>Conduit</option>
+                                <option value="tray">Cable Tray</option>
+                                <option value="buried">Direct Buried</option>
+                                <option value="overhead">Overhead</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Primary Loaded Conductors
+                            </label>
+                            <input type="number" id="primary_loaded_conductors" required min="1" max="10" value="3">
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">
+                        <i class="fas fa-tools"></i>
+                        Secondary Cable Configuration
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Number of Parallel Cables
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Number of parallel cable runs for secondary side (1 for single cable)"></i>
+                            </label>
+                            <input type="number" id="secondary_parallel_cables" required min="1" max="6" value="1">
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-ruler"></i>
+                                Max Cable Size per Run
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Maximum allowable cable size per parallel run"></i>
+                            </label>
+                            <select id="secondary_max_cable_size">
+                                <option value="1000">1000 MCM</option>
+                                <option value="900">900 MCM</option>
+                                <option value="800">800 MCM</option>
+                                <option value="750">750 MCM</option>
+                                <option value="700">700 MCM</option>
+                                <option value="600">600 MCM</option>
+                                <option value="500" selected>500 MCM</option>
+                                <option value="400">400 MCM</option>
+                                <option value="350">350 MCM</option>
+                                <option value="300">300 MCM</option>
+                                <option value="250">250 MCM</option>
+                                <option value="4/0">4/0 AWG</option>
+                                <option value="3/0">3/0 AWG</option>
+                                <option value="2/0">2/0 AWG</option>
+                                <option value="1/0">1/0 AWG</option>
+                                <option value="1">1 AWG</option>
+                                <option value="2">2 AWG</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-atom"></i>
+                                Secondary Conductor Material
+                            </label>
+                            <select id="secondary_conductor_material">
+                                <option value="copper" selected>Copper</option>
+                                <option value="aluminum">Aluminum</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-shield-alt"></i>
+                                Secondary Insulation Type
+                            </label>
+                            <select id="secondary_insulation_type">
+                                <option value="THHN" selected>THHN</option>
+                                <option value="XHHW">XHHW</option>
+                                <option value="XLPE">XLPE</option>
+                                <option value="PVC">PVC</option>
+                                <option value="EPR">EPR</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-wrench"></i>
+                                Secondary Installation Method
+                            </label>
+                            <select id="secondary_installation_method">
+                                <option value="conduit" selected>Conduit</option>
+                                <option value="tray">Cable Tray</option>
+                                <option value="buried">Direct Buried</option>
+                                <option value="overhead">Overhead</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Secondary Loaded Conductors
+                            </label>
+                            <input type="number" id="secondary_loaded_conductors" required min="1" max="10" value="3">
+                        </div>
+                    </div>
+
+                    <h3 class="subsection-title">
+                        <i class="fas fa-book"></i>
+                        Design Standards & Transformer
+                    </h3>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-book"></i>
+                                Design Standard
+                            </label>
+                            <select id="design_standard">
+                                <option value="NEC" selected>NEC (USA)</option>
+                                <option value="PEC">PEC (Philippines)</option>
+                                <option value="IEC">IEC (International)</option>
+                                <option value="AS/NZS">AS/NZS (Australia/NZ)</option>
+                                <option value="CEC">CEC (Canada)</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-box"></i>
+                                Transformer Type
+                            </label>
+                            <select id="transformer_type">
+                                <option value="dry" selected>Dry-type</option>
+                                <option value="oil">Oil-immersed</option>
+                                <option value="isolation">Isolation</option>
+                                <option value="auto">Auto-transformer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-map-marker-alt"></i>
+                                Mounting Location
+                            </label>
+                            <select id="mounting_location">
+                                <option value="indoor" selected>Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                                <option value="pad_mount">Pad Mount</option>
+                                <option value="vault">Vault</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>
+                                <i class="fas fa-clock"></i>
+                                Short Circuit Duration (s)
+                                <i class="fas fa-info-circle info-tooltip" data-tooltip="Duration for short circuit withstand capability"></i>
+                            </label>
+                            <input type="number" id="short_circuit_duration" required step="0.01" min="0.01" value="0.5">
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields for enhanced functionality -->
+                    <input type="hidden" id="distance_unit_hidden" value="feet">
+                    <input type="hidden" id="calculation_timestamp" value="">
+                    <input type="hidden" id="enhanced_mode" value="true">
+
+                    <!-- Auto-save indicator -->
+                    <div class="auto-save-indicator" id="autoSaveIndicator">
+                        <i class="fas fa-save"></i> Auto-saved
+                    </div>
+
+                    <button type="button" class="calculate-btn" onclick="calculateSizing()">
+                        <i class="fas fa-calculator"></i>
+                        Calculate Transformer Sizing
+                    </button>
+                </form>
+            </div>
+
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Results & Analysis
+                </h2>
+                
+                <div id="placeholder" style="text-align: center; color: #6c757d; padding: 2rem;">
+                    <i class="fas fa-calculator" style="font-size: 48px; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Enter your system parameters and click calculate to see results</p>
+                </div>
+
+                <div class="results-content" id="results"></div>
+                
+                <div class="action-buttons" id="actionButtons" style="display: none;">
+                    <button type="button" class="btn btn-secondary toggle-btn" onclick="toggleCalculation()">
+                        <i class="fas fa-eye"></i>
+                        Show Calculations
+                    </button>
+                    <button type="button" class="btn btn-success" id="generatePdfBtn">
+                        <i class="fas fa-file-pdf"></i>
+                        Export PDF
+                    </button>
+                </div>
+
+                <div class="calculation-steps" id="calculation"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Management Modals -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSaveModal()">&times;</span>
+            <h2><i class="fas fa-save"></i> Save Project</h2>
+            <div class="form-field">
+                <label>Project Name</label>
+                <input type="text" id="saveProjectName" placeholder="Enter project name">
+            </div>
+            <div class="form-field" style="margin-top: 1rem;">
+                <label>Description (Optional)</label>
+                <textarea id="saveProjectDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Enter project description"></textarea>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="confirmSaveProject()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn btn-secondary" onclick="closeSaveModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoadModal()">&times;</span>
+            <h2><i class="fas fa-folder-open"></i> Load Project</h2>
+            <div class="project-list" id="projectList">
+                <p style="text-align: center; color: #6c757d;">No saved projects found</p>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="closeLoadModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 PwrSysPro V1.2 Complete Enhanced - Professional Transformer Sizing Tool</p>
+        <p>Designed for electrical engineers and system designers</p>
+    </footer>
+
+    <script>
+        // Wire resistance tables (Ohms per 1000 feet)
+        const wireResistance = {
+            copper: {
+                '14': 3.07, '12': 1.93, '10': 1.21, '8': 0.764, '6': 0.491, '4': 0.308,
+                '3': 0.245, '2': 0.194, '1': 0.154, '1/0': 0.122, '2/0': 0.0967,
+                '3/0': 0.0766, '4/0': 0.0608, '250': 0.0515, '300': 0.0429,
+                '350': 0.0367, '400': 0.0321, '500': 0.0258, '600': 0.0214,
+                '700': 0.0184, '750': 0.0171, '800': 0.0161, '900': 0.0143, '1000': 0.0129
+            },
+            aluminum: {
+                '14': 5.06, '12': 3.18, '10': 2.00, '8': 1.26, '6': 0.808, '4': 0.508,
+                '3': 0.403, '2': 0.319, '1': 0.253, '1/0': 0.201, '2/0': 0.159,
+                '3/0': 0.126, '4/0': 0.100, '250': 0.0847, '300': 0.0706,
+                '350': 0.0605, '400': 0.0529, '500': 0.0424, '600': 0.0353,
+                '700': 0.0303, '750': 0.0282, '800': 0.0265, '900': 0.0235, '1000': 0.0212
+            }
+        };
+
+        // Wire reactance (Ohms per 1000 feet) - approximate values for conduit
+        const wireReactance = {
+            '14': 0.058, '12': 0.056, '10': 0.054, '8': 0.052, '6': 0.051, '4': 0.050,
+            '3': 0.049, '2': 0.048, '1': 0.047, '1/0': 0.046, '2/0': 0.045,
+            '3/0': 0.044, '4/0': 0.043, '250': 0.042, '300': 0.041,
+            '350': 0.040, '400': 0.040, '500': 0.039, '600': 0.038,
+            '700': 0.037, '750': 0.037, '800': 0.036, '900': 0.036, '1000': 0.035
+        };
+
+        // Standard kVA transformer ratings
+        const standardKVA = [15, 30, 37.5, 45, 75, 112.5, 150, 225, 300, 500, 750, 1000, 1500, 2000, 2500, 3000];
+
+        // Standard overcurrent protection device ratings
+        const standardOCPD = [
+            15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 
+            300, 350, 400, 450, 500, 600, 700, 800, 1000, 1200, 1600, 2000, 2500, 3000, 4000, 5000, 6000
+        ];
+
+        let currentProject = {
+            name: 'Untitled Project',
+            data: {},
+            lastModified: new Date()
+        };
+
+        function updateProgress() {
+            const inputs = document.querySelectorAll('input[required], select');
+            let filled = 0;
+            inputs.forEach(input => {
+                if (input.value && input.value.trim() !== '') filled++;
+            });
+            const progress = (filled / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateProgress);
+                input.addEventListener('change', updateProgress);
+            });
+            updateProgress();
+            loadProjectList();
+
+            // Custom voltage handling
+            document.getElementById('load_voltage').addEventListener('change', function() {
+                const customInput = document.getElementById('custom_load_voltage');
+                if (this.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                }
+            });
+
+            document.getElementById('service_voltage').addEventListener('change', function() {
+                const customInput = document.getElementById('custom_service_voltage');
+                if (this.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                }
+            });
+
+            // PDF generation
+            document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
+        });
+
+        function calculateSizing() {
+            // Get input values
+            let load_kw = parseFloat(document.getElementById('load_kw').value);
+            const pf = parseFloat(document.getElementById('power_factor').value);
+            
+            // Enhanced load calculation from categories
+            const motor_load = parseFloat(document.getElementById('motor_load').value) || 0;
+            const lighting_load = parseFloat(document.getElementById('lighting_load').value) || 0;
+            const receptacle_load = parseFloat(document.getElementById('receptacle_load').value) || 0;
+            const hvac_load = parseFloat(document.getElementById('hvac_load').value) || 0;
+            
+            const motor_demand = parseFloat(document.getElementById('motor_demand').value) || 100;
+            const lighting_demand = parseFloat(document.getElementById('lighting_demand').value) || 100;
+            const receptacle_demand = parseFloat(document.getElementById('receptacle_demand').value) || 50;
+            const hvac_demand = parseFloat(document.getElementById('hvac_demand').value) || 100;
+            
+            // Calculate total demand load from categories
+            const total_motor_demand = motor_load * (motor_demand / 100) * 1.25; // 125% safety factor
+            const total_lighting_demand = lighting_load * (lighting_demand / 100) * 1.10; // 110% safety factor
+            const total_receptacle_demand = receptacle_load * (receptacle_demand / 100) * 1.15; // 115% safety factor
+            const total_hvac_demand = hvac_load * (hvac_demand / 100) * 1.25; // 125% safety factor
+            
+            const calculated_load = total_motor_demand + total_lighting_demand + total_receptacle_demand + total_hvac_demand;
+            
+            // Update calculated load display
+            document.getElementById('total_calculated_load').value = calculated_load.toFixed(2);
+            
+            // Calculate overall demand factor
+            const total_connected = motor_load + lighting_load + receptacle_load + hvac_load;
+            const overall_demand = total_connected > 0 ? (calculated_load / (total_connected * 1.20)) * 100 : 100;
+            document.getElementById('overall_demand_factor').value = overall_demand.toFixed(1);
+            
+            // Use calculated load if available, otherwise use manual input
+            if (calculated_load > 0) {
+                load_kw = calculated_load;
+            }
+            
+            let load_voltage = parseFloat(document.getElementById('load_voltage').value);
+            if (document.getElementById('load_voltage').value === 'custom') {
+                load_voltage = parseFloat(document.getElementById('custom_load_voltage').value);
+            }
+            
+            let service_voltage = parseFloat(document.getElementById('service_voltage').value);
+            if (document.getElementById('service_voltage').value === 'custom') {
+                service_voltage = parseFloat(document.getElementById('custom_service_voltage').value);
+            }
+            
+            const phase = document.getElementById('phase_type').value;
+            const load_type = document.getElementById('load_type').value;
+            const ambient_temp = parseFloat(document.getElementById('ambient_temp').value);
+            const transformer_type = document.getElementById('transformer_type').value;
+            const mounting_location = document.getElementById('mounting_location').value;
+            
+            const primary_distance = parseFloat(document.getElementById('primary_distance').value);
+            const secondary_distance = parseFloat(document.getElementById('secondary_distance').value);
+            const distance_unit = document.getElementById('distance_unit').value;
+            
+            // Primary cable settings
+            const primary_parallel_cables = parseInt(document.getElementById('primary_parallel_cables').value);
+            const primary_max_cable_size = document.getElementById('primary_max_cable_size').value;
+            const primary_conductor_material = document.getElementById('primary_conductor_material').value;
+            const primary_insulation_type = document.getElementById('primary_insulation_type').value;
+            const primary_installation_method = document.getElementById('primary_installation_method').value;
+            const primary_loaded_conductors = parseInt(document.getElementById('primary_loaded_conductors').value);
+            
+            // Secondary cable settings
+            const secondary_parallel_cables = parseInt(document.getElementById('secondary_parallel_cables').value);
+            const secondary_max_cable_size = document.getElementById('secondary_max_cable_size').value;
+            const secondary_conductor_material = document.getElementById('secondary_conductor_material').value;
+            const secondary_insulation_type = document.getElementById('secondary_insulation_type').value;
+            const secondary_installation_method = document.getElementById('secondary_installation_method').value;
+            const secondary_loaded_conductors = parseInt(document.getElementById('secondary_loaded_conductors').value);
+            
+            const max_vd_primary = parseFloat(document.getElementById('max_vd_primary').value);
+            const max_vd_secondary = parseFloat(document.getElementById('max_vd_secondary').value);
+
+            // Enhanced validation
+            if (!load_kw || !pf || !load_voltage || !service_voltage) {
+                showErrorMessage('Please fill in all required fields');
+                return;
+            }
+
+            if (load_kw <= 0 || pf <= 0 || pf > 1) {
+                showErrorMessage('Invalid input values. Please check your entries.');
+                return;
+            }
+
+            // Convert distance to feet if needed
+            const primary_dist_ft = distance_unit === 'meters' ? primary_distance * 3.28084 : primary_distance;
+            const secondary_dist_ft = distance_unit === 'meters' ? secondary_distance * 3.28084 : secondary_distance;
+
+            // Enhanced load calculation with expansion margin
+            let base_kva = load_kw / pf;
+            
+            // Apply expansion margin
+            if (expansion_margin > 0) {
+                base_kva = base_kva * (1 + expansion_margin / 100);
+            }
+
+            // Enhanced safety factors based on load type
+            let safety_factor = 1.0;
+            switch(load_type) {
+                case 'motor': safety_factor = 1.25; break;
+                case 'mixed': safety_factor = 1.15; break;
+                case 'lighting': safety_factor = 1.10; break;
+                case 'continuous': safety_factor = 1.25; break;
+                default: safety_factor = 1.0; break;
+            }
+
+            // Enhanced temperature derating
+            let temp_factor = 1.0;
+            if (ambient_temp > 40) {
+                // Different temperature correction based on standard
+                switch(design_standard) {
+                    case 'PEC':
+                    case 'NEC':
+                        temp_factor = 1 + (ambient_temp - 40) * 0.01; // NEC/PEC method
+                        break;
+                    case 'IEC':
+                        temp_factor = 1 + (ambient_temp - 40) * 0.008; // IEC method
+                        break;
+                    default:
+                        temp_factor = 1 + (ambient_temp - 40) * 0.01;
+                        break;
+                }
+            }
+
+            // Apply altitude derating
+            temp_factor = temp_factor * altitude_factor;
+
+            const kva = base_kva * safety_factor * temp_factor;
+            
+            // Find standard transformer size
+            const transformer_size = standardKVA.find(size => size >= kva) || standardKVA[standardKVA.length - 1];
+
+            // Calculate full load currents
+            const flc_primary = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * service_voltage) :
+                (transformer_size * 1000) / service_voltage;
+                
+            const flc_secondary = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * load_voltage) :
+                (transformer_size * 1000) / load_voltage;
+
+            // Calculate cable sizing for parallel configurations
+            const primary_current_per_cable = (flc_primary * 1.25) / primary_parallel_cables;
+            const secondary_current_per_cable = (flc_secondary * 1.25) / secondary_parallel_cables;
+
+            // Calculate primary cable sizing
+            const primaryCable = calculateEnhancedParallelCableSize(
+                primary_current_per_cable,
+                primary_dist_ft,
+                service_voltage,
+                phase,
+                primary_conductor_material,
+                max_vd_primary,
+                primary_parallel_cables,
+                primary_max_cable_size,
+                primary_installation_method,
+                primary_loaded_conductors,
+                primary_insulation_type
+            );
+
+            // Calculate secondary cable sizing
+            const secondaryCable = calculateEnhancedParallelCableSize(
+                secondary_current_per_cable,
+                secondary_dist_ft,
+                load_voltage,
+                phase,
+                secondary_conductor_material,
+                max_vd_secondary,
+                secondary_parallel_cables,
+                secondary_max_cable_size,
+                secondary_installation_method,
+                secondary_loaded_conductors,
+                secondary_insulation_type
+            );
+
+            // Enhanced transformer impedance calculation
+            let transformer_impedance;
+            switch(transformer_type) {
+                case 'dry': transformer_impedance = transformer_size <= 500 ? 4.0 : 5.75; break;
+                case 'oil': transformer_impedance = transformer_size <= 500 ? 4.0 : 5.75; break;
+                case 'isolation': transformer_impedance = 6.0; break;
+                case 'auto': transformer_impedance = 7.5; break;
+            }
+
+            // Enhanced fault current calculation
+            const fault_current = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * load_voltage * (transformer_impedance / 100)) :
+                (transformer_size * 1000) / (load_voltage * (transformer_impedance / 100));
+
+            const kaic = (fault_current / 1000).toFixed(1);
+
+            // Calculate OCPD sizing
+            const next_ocpd_primary = standardOCPD.find(rating => rating >= flc_primary * 1.25) || standardOCPD[standardOCPD.length - 1];
+            const next_ocpd_secondary = standardOCPD.find(rating => rating >= flc_secondary * 1.25) || standardOCPD[standardOCPD.length - 1];
+
+            // Calculate efficiency
+            const efficiency = calculateEfficiency(transformer_size, (load_kw / transformer_size));
+
+            // Enhanced compliance checking
+            const compliance = checkCompliance(design_standard, transformer_size, primaryCable, secondaryCable, fault_current);
+
+            // Auto-save functionality
+            autoSaveProject();
+
+            // Display results
+            displayEnhancedResults({
+                load_kw, pf, load_voltage, service_voltage, phase, load_type, ambient_temp,
+                transformer_size, kva, flc_primary, flc_secondary, transformer_impedance,
+                fault_current, kaic, next_ocpd_primary, next_ocpd_secondary, efficiency,
+                primaryCable, secondaryCable, primary_parallel_cables, secondary_parallel_cables,
+                primary_dist_ft, secondary_dist_ft, distance_unit, primary_distance, secondary_distance,
+                max_vd_primary, max_vd_secondary, design_standard, safety_factor, temp_factor, 
+                base_kva, expansion_margin, site_altitude, altitude_factor, compliance,
+                motor_load, lighting_load, receptacle_load, hvac_load,
+                total_motor_demand, total_lighting_demand, total_receptacle_demand, total_hvac_demand,
+                overall_demand, calculated_load, primary_current_per_cable, secondary_current_per_cable
+            });
+
+            // Show enhanced calculation steps
+            showEnhancedCalculationSteps({
+                load_kw, pf, load_voltage, service_voltage, phase, load_type, ambient_temp,
+                transformer_size, kva, flc_primary, flc_secondary, transformer_impedance,
+                fault_current, kaic, next_ocpd_primary, next_ocpd_secondary, efficiency,
+                primaryCable, secondaryCable, primary_parallel_cables, secondary_parallel_cables,
+                primary_dist_ft, secondary_dist_ft, distance_unit, primary_distance, secondary_distance,
+                safety_factor, temp_factor, base_kva, expansion_margin, site_altitude, altitude_factor,
+                primary_current_per_cable, secondary_current_per_cable, design_standard
+            });
+
+            // Update timestamp
+            document.getElementById('calculation_timestamp').value = new Date().toISOString();
+        }
+            const primary_dist_ft = distance_unit === 'meters' ? primary_distance * 3.28084 : primary_distance;
+            const secondary_dist_ft = distance_unit === 'meters' ? secondary_distance * 3.28084 : secondary_distance;
+
+            // Calculate kVA with safety factors
+            let safety_factor = 1.0;
+            switch(load_type) {
+                case 'motor': safety_factor = 1.25; break;
+                case 'mixed': safety_factor = 1.15; break;
+                case 'lighting': safety_factor = 1.1; break;
+                default: safety_factor = 1.0;
+            }
+
+            const base_kva = (load_kw / pf) * safety_factor;
+            
+            // Temperature derating
+            let temp_factor = 1.0;
+            if (ambient_temp > 40) {
+                temp_factor = 1 + (ambient_temp - 40) * 0.01;
+            }
+
+            const kva = base_kva * temp_factor;
+            
+            // Find standard transformer size
+            const transformer_size = standardKVA.find(size => size >= kva) || standardKVA[standardKVA.length - 1];
+
+            // Calculate full load currents
+            const flc_primary = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * service_voltage) :
+                (transformer_size * 1000) / service_voltage;
+                
+            const flc_secondary = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * load_voltage) :
+                (transformer_size * 1000) / load_voltage;
+
+            // Calculate cable sizing for parallel configurations
+            const primary_current_per_cable = (flc_primary * 1.25) / primary_parallel_cables;
+            const secondary_current_per_cable = (flc_secondary * 1.25) / secondary_parallel_cables;
+
+            // Calculate primary cable sizing
+            const primaryCable = calculateParallelCableSize(
+                primary_current_per_cable,
+                primary_dist_ft,
+                service_voltage,
+                phase,
+                primary_conductor_material,
+                max_vd_primary,
+                primary_parallel_cables,
+                primary_max_cable_size,
+                primary_installation_method,
+                primary_loaded_conductors
+            );
+
+            // Calculate secondary cable sizing
+            const secondaryCable = calculateParallelCableSize(
+                secondary_current_per_cable,
+                secondary_dist_ft,
+                load_voltage,
+                phase,
+                secondary_conductor_material,
+                max_vd_secondary,
+                secondary_parallel_cables,
+                secondary_max_cable_size,
+                secondary_installation_method,
+                secondary_loaded_conductors
+            );
+
+            // Calculate transformer impedance and fault current
+            let transformer_impedance = 5.75; // default for dry-type
+            switch(transformer_type) {
+                case 'oil': transformer_impedance = 5.5; break;
+                case 'isolation': transformer_impedance = 6.0; break;
+                case 'auto': transformer_impedance = 7.5; break;
+            }
+
+            const fault_current = phase === 'three' ? 
+                (transformer_size * 1000) / (Math.sqrt(3) * load_voltage * (transformer_impedance / 100)) :
+                (transformer_size * 1000) / (load_voltage * (transformer_impedance / 100));
+
+            const kaic = (fault_current / 1000).toFixed(1);
+
+            // Calculate OCPD sizing
+            const next_ocpd_primary = standardOCPD.find(rating => rating >= flc_primary * 1.25) || standardOCPD[standardOCPD.length - 1];
+            const next_ocpd_secondary = standardOCPD.find(rating => rating >= flc_secondary * 1.25) || standardOCPD[standardOCPD.length - 1];
+
+            // Calculate efficiency
+            const efficiency = calculateEfficiency(transformer_size, (load_kw / transformer_size));
+
+            // Display results
+            displayResults({
+                load_kw, pf, load_voltage, service_voltage, phase, load_type, ambient_temp,
+                transformer_size, kva, flc_primary, flc_secondary, transformer_impedance,
+                fault_current, kaic, next_ocpd_primary, next_ocpd_secondary, efficiency,
+                primaryCable, secondaryCable, primary_parallel_cables, secondary_parallel_cables,
+                primary_dist_ft, secondary_dist_ft, distance_unit, primary_distance, secondary_distance,
+                max_vd_primary, max_vd_secondary
+            });
+
+            // Show detailed calculations
+            showCalculationSteps({
+                load_kw, pf, load_voltage, service_voltage, phase, load_type, ambient_temp,
+                transformer_size, kva, flc_primary, flc_secondary, transformer_impedance,
+                fault_current, kaic, next_ocpd_primary, next_ocpd_secondary, efficiency,
+                primaryCable, secondaryCable, primary_parallel_cables, secondary_parallel_cables,
+                primary_dist_ft, secondary_dist_ft, distance_unit, primary_distance, secondary_distance,
+                safety_factor, temp_factor, base_kva,
+                primary_current_per_cable, secondary_current_per_cable
+            });
+        }
+
+        function calculateParallelCableSize(current_per_cable, distance, voltage, phase, material, maxVD, parallel_count, max_cable_size, installation_method, loaded_conductors) {
+            const wireSizes = [
+                {awg: '14', ampacity: 20}, {awg: '12', ampacity: 25}, {awg: '10', ampacity: 35},
+                {awg: '8', ampacity: 50}, {awg: '6', ampacity: 65}, {awg: '4', ampacity: 85},
+                {awg: '3', ampacity: 100}, {awg: '2', ampacity: 115}, {awg: '1', ampacity: 130},
+                {awg: '1/0', ampacity: 150}, {awg: '2/0', ampacity: 175}, {awg: '3/0', ampacity: 200},
+                {awg: '4/0', ampacity: 230}, {awg: '250', ampacity: 255}, {awg: '300', ampacity: 285},
+                {awg: '350', ampacity: 310}, {awg: '400', ampacity: 335}, {awg: '500', ampacity: 380},
+                {awg: '600', ampacity: 420}, {awg: '700', ampacity: 460}, {awg: '750', ampacity: 475},
+                {awg: '800', ampacity: 490}, {awg: '900', ampacity: 520}, {awg: '1000', ampacity: 545}
+            ];
+
+            // Apply derating factors based on installation method and loaded conductors
+            let derating_factor = 1.0;
+            if (loaded_conductors > 3) {
+                const derating_table = {4: 0.8, 5: 0.8, 6: 0.8, 7: 0.7, 8: 0.7, 9: 0.7, 10: 0.5};
+                derating_factor = derating_table[Math.min(loaded_conductors, 10)] || 0.5;
+            }
+
+            // Limit wire sizes based on max_cable_size
+            let maxSizeIndex = wireSizes.findIndex(size => size.awg === max_cable_size);
+            if (maxSizeIndex === -1) maxSizeIndex = wireSizes.length - 1;
+            const availableSizes = wireSizes.slice(0, maxSizeIndex + 1);
+
+            // Find minimum size for ampacity (per cable)
+            let selectedSize = availableSizes.find(size => (size.ampacity * derating_factor) >= current_per_cable);
+            
+            if (!selectedSize) {
+                // If even the largest available size is insufficient, recommend more parallel cables
+                const largestSize = availableSizes[availableSizes.length - 1];
+                const max_ampacity_per_cable = largestSize.ampacity * derating_factor;
+                const min_parallel_needed = Math.ceil((current_per_cable * parallel_count) / max_ampacity_per_cable);
+                
+                return {
+                    size: `${largestSize.awg} AWG`,
+                    ampacity: largestSize.ampacity,
+                    derated_ampacity: max_ampacity_per_cable,
+                    resistance: wireResistance[material][largestSize.awg],
+                    reactance: wireReactance[largestSize.awg],
+                    voltageDrop: 999, // Flag as exceeding
+                    voltageDropVolts: 999,
+                    parallel_count: parallel_count,
+                    total_ampacity: max_ampacity_per_cable * parallel_count,
+                    compliance_status: 'CRITICAL',
+                    compliance_message: `Insufficient ampacity. Consider ${min_parallel_needed} parallel cables instead of ${parallel_count}.`,
+                    derating_factor: derating_factor,
+                    suggestions: [`Increase parallel cables to ${min_parallel_needed}`, 'Use larger conduit/raceway', 'Reduce loaded conductors per raceway']
+                };
+            }
+
+            // Check voltage drop and upsize if necessary
+            let finalSize = selectedSize;
+            let voltage_drop_compliance = false;
+            
+            for (let i = availableSizes.indexOf(selectedSize); i < availableSizes.length; i++) {
+                const size = availableSizes[i];
+                const resistance = wireResistance[material][size.awg];
+                const reactance = wireReactance[size.awg];
+                
+                if (!resistance) continue;
+
+                // Calculate voltage drop for parallel configuration
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const effective_impedance = impedance / parallel_count; // Parallel impedance reduction
+                
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * (current_per_cable * parallel_count) * effective_impedance * distance / 1000) :
+                    (2 * (current_per_cable * parallel_count) * resistance / parallel_count * distance / 1000);
+                    
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+                if (voltageDropPercent <= maxVD) {
+                    voltage_drop_compliance = true;
+                    finalSize = {
+                        ...size,
+                        resistance: resistance,
+                        reactance: reactance,
+                        voltageDrop: voltageDropPercent,
+                        voltageDropVolts: voltageDropVolts,
+                        derated_ampacity: size.ampacity * derating_factor
+                    };
+                    break;
+                }
+            }
+
+            // If no size meets voltage drop requirement, use largest available and flag
+            if (!voltage_drop_compliance) {
+                const largestSize = availableSizes[availableSizes.length - 1];
+                const resistance = wireResistance[material][largestSize.awg];
+                const reactance = wireReactance[largestSize.awg];
+                const impedance = Math.sqrt(resistance * resistance + reactance * reactance);
+                const effective_impedance = impedance / parallel_count;
+                
+                const voltageDropVolts = phase === 'three' ? 
+                    (Math.sqrt(3) * (current_per_cable * parallel_count) * effective_impedance * distance / 1000) :
+                    (2 * (current_per_cable * parallel_count) * resistance / parallel_count * distance / 1000);
+                    
+                const voltageDropPercent = (voltageDropVolts / voltage) * 100;
+
+                finalSize = {
+                    ...largestSize,
+                    resistance: resistance,
+                    reactance: reactance,
+                    voltageDrop: voltageDropPercent,
+                    voltageDropVolts: voltageDropVolts,
+                    derated_ampacity: largestSize.ampacity * derating_factor
+                };
+            }
+
+            // Determine compliance status
+            let compliance_status = 'GOOD';
+            let compliance_message = 'All requirements met';
+            let suggestions = [];
+
+            const total_ampacity = finalSize.derated_ampacity * parallel_count;
+            const required_ampacity = current_per_cable * parallel_count;
+
+            if (total_ampacity < required_ampacity) {
+                compliance_status = 'CRITICAL';
+                compliance_message = 'Insufficient total ampacity';
+                suggestions.push('Increase number of parallel cables');
+                suggestions.push('Use larger cable size per run');
+            } else if (finalSize.voltageDrop > maxVD) {
+                compliance_status = 'WARNING';
+                compliance_message = `Voltage drop exceeds ${maxVD}% limit`;
+                suggestions.push('Increase number of parallel cables');
+                suggestions.push('Use larger cable size per run');
+                suggestions.push('Reduce distance if possible');
+            } else if (finalSize.voltageDrop > maxVD * 0.8) {
+                compliance_status = 'WARNING';
+                compliance_message = 'Voltage drop approaching limit';
+                suggestions.push('Consider larger cable size for better performance');
+            }
+
+            return {
+                size: `${finalSize.awg} AWG`,
+                ampacity: finalSize.ampacity,
+                derated_ampacity: finalSize.derated_ampacity,
+                resistance: finalSize.resistance,
+                reactance: finalSize.reactance,
+                voltageDrop: finalSize.voltageDrop,
+                voltageDropVolts: finalSize.voltageDropVolts,
+                parallel_count: parallel_count,
+                total_ampacity: total_ampacity,
+                current_per_cable: current_per_cable,
+                compliance_status: compliance_status,
+                compliance_message: compliance_message,
+                derating_factor: derating_factor,
+                suggestions: suggestions
+            };
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            // Check for any compliance issues
+            const hasIssues = data.primaryCable.compliance_status !== 'GOOD' || 
+                             data.secondaryCable.compliance_status !== 'GOOD';
+
+            let html = `
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-microchip"></i>
+                        Transformer Sizing
+                    </div>
+                    <div class="result-value">${data.transformer_size} kVA</div>
+                    <div class="result-detail">
+                        Required: ${data.kva.toFixed(2)} kVA<br>
+                        Efficiency: ${data.efficiency.toFixed(1)}%<br>
+                        Load Factor: ${(data.load_kw / data.transformer_size * 100).toFixed(1)}%
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Current Analysis
+                    </div>
+                    <div class="result-detail">
+                        <strong>Primary:</strong> ${data.flc_primary.toFixed(2)} A FLC, ${(data.flc_primary * 1.25).toFixed(2)} A Design<br>
+                        <strong>Secondary:</strong> ${data.flc_secondary.toFixed(2)} A FLC, ${(data.flc_secondary * 1.25).toFixed(2)} A Design
+                    </div>
+                </div>
+
+                <div class="result-card ${getVoltageDropClass(data.primaryCable.voltageDrop, data.max_vd_primary)}">
+                    <div class="result-title">
+                        <i class="fas fa-cable-car"></i>
+                        Primary Cable Configuration
+                    </div>
+                    <div class="result-detail">
+                        <strong>Configuration:</strong> ${data.primary_parallel_cables} × ${data.primaryCable.size}<br>
+                        <strong>Per Cable:</strong> ${(data.primaryCable.current_per_cable || 0).toFixed(2)} A / ${(data.primaryCable.derated_ampacity || data.primaryCable.ampacity || 0).toFixed(0)} A capacity<br>
+                        <strong>Total Capacity:</strong> ${(data.primaryCable.total_ampacity || 0).toFixed(0)} A<br>
+                        <strong>Voltage Drop:</strong> ${(data.primaryCable.voltageDropVolts || 0).toFixed(1)}V (${(data.primaryCable.voltageDrop || 0).toFixed(2)}%)
+                    </div>
+                    <div class="compliance-status compliance-${data.primaryCable.compliance_status.toLowerCase()}">
+                        ${getComplianceIcon(data.primaryCable.compliance_status)} ${data.primaryCable.compliance_message}
+                    </div>
+                    ${data.primaryCable.suggestions.length > 0 ? generateSuggestionBox(data.primaryCable.suggestions) : ''}
+                </div>
+
+                <div class="result-card ${getVoltageDropClass(data.secondaryCable.voltageDrop, data.max_vd_secondary)}">
+                    <div class="result-title">
+                        <i class="fas fa-cable-car"></i>
+                        Secondary Cable Configuration
+                    </div>
+                    <div class="result-detail">
+                        <strong>Configuration:</strong> ${data.secondary_parallel_cables} × ${data.secondaryCable.size}<br>
+                        <strong>Per Cable:</strong> ${(data.secondaryCable.current_per_cable || 0).toFixed(2)} A / ${(data.secondaryCable.derated_ampacity || data.secondaryCable.ampacity || 0).toFixed(0)} A capacity<br>
+                        <strong>Total Capacity:</strong> ${(data.secondaryCable.total_ampacity || 0).toFixed(0)} A<br>
+                        <strong>Voltage Drop:</strong> ${(data.secondaryCable.voltageDropVolts || 0).toFixed(1)}V (${(data.secondaryCable.voltageDrop || 0).toFixed(2)}%)
+                    </div>
+                    <div class="compliance-status compliance-${data.secondaryCable.compliance_status.toLowerCase()}">
+                        ${getComplianceIcon(data.secondaryCable.compliance_status)} ${data.secondaryCable.compliance_message}
+                    </div>
+                    ${data.secondaryCable.suggestions.length > 0 ? generateSuggestionBox(data.secondaryCable.suggestions) : ''}
+                </div>
+
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Protection & Fault Analysis
+                    </div>
+                    <div class="result-detail">
+                        <strong>Primary OCPD:</strong> ${data.next_ocpd_primary} A<br>
+                        <strong>Secondary OCPD:</strong> ${data.next_ocpd_secondary} A<br>
+                        <strong>Fault Current:</strong> ${data.fault_current.toFixed(0)} A (${data.kaic} kAIC)<br>
+                        <strong>Distance:</strong> Primary ${data.primary_distance}${data.distance_unit === 'feet' ? 'ft' : 'm'}, Secondary ${data.secondary_distance}${data.distance_unit === 'feet' ? 'ft' : 'm'}
+                    </div>
+                </div>
+            `;
+
+            if (hasIssues) {
+                html = `
+                    <div class="warning-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Design Attention Required:</strong> Some requirements are not fully met. Review cable configurations below.
+                    </div>
+                ` + html;
+            }
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'flex';
+        }
+
+        function generateSuggestionBox(suggestions) {
+            return `
+                <div class="suggestion-box">
+                    <div class="suggestion-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Recommendations:
+                    </div>
+                    <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                        ${suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function getComplianceIcon(status) {
+            switch(status) {
+                case 'GOOD': return '✓';
+                case 'WARNING': return '⚠';
+                case 'CRITICAL': return '✗';
+                default: return '?';
+            }
+        }
+
+        function showCalculationSteps(data) {
+            const calc = `
+                <div class="step">
+                    <strong>1. Load Analysis:</strong><br>
+                    Base Load: ${data.load_kw} kW @ ${data.pf} PF = ${(data.load_kw / data.pf).toFixed(2)} kVA<br>
+                    Safety Factor (${data.load_type}): ${data.safety_factor}<br>
+                    Adjusted Load: ${data.base_kva.toFixed(2)} kVA<br>
+                    Temperature Factor (${data.ambient_temp}°C): ${data.temp_factor.toFixed(3)}<br>
+                    Final Required kVA: ${data.kva.toFixed(2)} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>2. Transformer Selection:</strong><br>
+                    Required: ${data.kva.toFixed(2)} kVA<br>
+                    Selected Standard Size: ${data.transformer_size} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>3. Current Calculations:</strong><br>
+                    ${data.phase === 'three' ? 'Three-phase' : 'Single-phase'} System<br>
+                    Primary FLC = ${data.transformer_size} × 1000 ÷ ${data.phase === 'three' ? '(√3 × ' + data.service_voltage + ')' : data.service_voltage} = ${data.flc_primary.toFixed(2)} A<br>
+                    Secondary FLC = ${data.transformer_size} × 1000 ÷ ${data.phase === 'three' ? '(√3 × ' + data.load_voltage + ')' : data.load_voltage} = ${data.flc_secondary.toFixed(2)} A
+                </div>
+                
+                <div class="step">
+                    <strong>4. Parallel Cable Analysis:</strong><br>
+                    <strong>Primary Cables:</strong><br>
+                    Total Design Current: ${(data.flc_primary * 1.25).toFixed(2)} A<br>
+                    Number of Parallel Cables: ${data.primary_parallel_cables}<br>
+                    Current per Cable: ${data.primary_current_per_cable.toFixed(2)} A<br>
+                    Derating Factor: ${data.primaryCable.derating_factor.toFixed(2)}<br>
+                    Cable Size: ${data.primaryCable.size}<br>
+                    Derated Ampacity per Cable: ${data.primaryCable.derated_ampacity.toFixed(0)} A<br>
+                    Total System Ampacity: ${data.primaryCable.total_ampacity.toFixed(0)} A<br>
+                    <br>
+                    <strong>Secondary Cables:</strong><br>
+                    Total Design Current: ${(data.flc_secondary * 1.25).toFixed(2)} A<br>
+                    Number of Parallel Cables: ${data.secondary_parallel_cables}<br>
+                    Current per Cable: ${data.secondary_current_per_cable.toFixed(2)} A<br>
+                    Derating Factor: ${data.secondaryCable.derating_factor.toFixed(2)}<br>
+                    Cable Size: ${data.secondaryCable.size}<br>
+                    Derated Ampacity per Cable: ${data.secondaryCable.derated_ampacity.toFixed(0)} A<br>
+                    Total System Ampacity: ${data.secondaryCable.total_ampacity.toFixed(0)} A
+                </div>
+                
+                <div class="step">
+                    <strong>5. Voltage Drop Analysis:</strong><br>
+                    <strong>Primary Cable:</strong><br>
+                    Distance: ${data.primary_distance} ${data.distance_unit} (${data.primary_dist_ft.toFixed(0)} ft)<br>
+                    ${data.primary_parallel_cables} parallel cables carrying ${data.primary_current_per_cable.toFixed(2)} A each<br>
+                    Resistance per cable: ${data.primaryCable.resistance.toFixed(4)} Ω/1000ft<br>
+                    Effective parallel resistance: ${(data.primaryCable.resistance / data.primary_parallel_cables).toFixed(4)} Ω/1000ft<br>
+                    Voltage Drop = ${data.primaryCable.voltageDropVolts.toFixed(1)}V (${data.primaryCable.voltageDrop.toFixed(2)}%)<br>
+                    Status: ${getVoltageDropStatus(data.primaryCable.voltageDrop, data.max_vd_primary)}<br>
+                    <br>
+                    <strong>Secondary Cable:</strong><br>
+                    Distance: ${data.secondary_distance} ${data.distance_unit} (${data.secondary_dist_ft.toFixed(0)} ft)<br>
+                    ${data.secondary_parallel_cables} parallel cables carrying ${data.secondary_current_per_cable.toFixed(2)} A each<br>
+                    Resistance per cable: ${data.secondaryCable.resistance.toFixed(4)} Ω/1000ft<br>
+                    Effective parallel resistance: ${(data.secondaryCable.resistance / data.secondary_parallel_cables).toFixed(4)} Ω/1000ft<br>
+                    Voltage Drop = ${data.secondaryCable.voltageDropVolts.toFixed(1)}V (${data.secondaryCable.voltageDrop.toFixed(2)}%)<br>
+                    Status: ${getVoltageDropStatus(data.secondaryCable.voltageDrop, data.max_vd_secondary)}
+                </div>
+                
+                <div class="step">
+                    <strong>6. Fault Current Analysis:</strong><br>
+                    Transformer Impedance: ${data.transformer_impedance}%<br>
+                    Fault Current = ${data.transformer_size} × 1000 ÷ ${data.phase === 'three' ? '(√3 × ' + data.load_voltage + ' × ' + (data.transformer_impedance/100) + ')' : '(' + data.load_voltage + ' × ' + (data.transformer_impedance/100) + ')'} = ${data.fault_current.toFixed(0)} A<br>
+                    KAIC Rating = ${data.fault_current.toFixed(0)} ÷ 1000 = ${data.kaic} kA
+                </div>
+                
+                <div class="step">
+                    <strong>7. Protection Device Sizing:</strong><br>
+                    Primary OCPD = ${data.flc_primary.toFixed(2)} × 1.25 = ${(data.flc_primary * 1.25).toFixed(2)} A → ${data.next_ocpd_primary} A (standard size)<br>
+                    Secondary OCPD = ${data.flc_secondary.toFixed(2)} × 1.25 = ${(data.flc_secondary * 1.25).toFixed(2)} A → ${data.next_ocpd_secondary} A (standard size)
+                </div>
+                
+                <div class="step">
+                    <strong>8. Performance Metrics:</strong><br>
+                    Estimated Efficiency: ${data.efficiency.toFixed(1)}%<br>
+                    Load Factor: ${(data.load_kw / data.transformer_size * 100).toFixed(1)}%<br>
+                    Power Density: ${(data.load_kw / data.transformer_size).toFixed(3)} kW/kVA
+                </div>
+            `;
+            
+            document.getElementById('calculation').innerHTML = calc;
+        }
+
+        function getVoltageDropClass(actualVD, maxVD) {
+            if (actualVD <= maxVD * 0.8) return 'voltage-drop-card';
+            if (actualVD <= maxVD) return 'voltage-drop-warning';
+            return 'voltage-drop-critical';
+        }
+
+        function getVoltageDropStatus(actualVD, maxVD) {
+            if (actualVD <= maxVD * 0.8) return '✓ Excellent';
+            if (actualVD <= maxVD) return '⚠ Acceptable';
+            return '✗ Exceeds Limit';
+        }
+
+        function calculateEfficiency(kva, loadFactor) {
+            let baseEfficiency;
+            if (kva <= 150) baseEfficiency = 96.5;
+            else if (kva <= 500) baseEfficiency = 97.5;
+            else if (kva <= 1000) baseEfficiency = 98.0;
+            else baseEfficiency = 98.5;
+            
+            const optimalLoading = 0.75;
+            const loadingPenalty = Math.abs(loadFactor - optimalLoading) * 2;
+            
+            return Math.max(baseEfficiency - loadingPenalty, 90);
+        }
+
+        function toggleCalculation() {
+            const calcDiv = document.getElementById('calculation');
+            const btn = document.querySelector('.toggle-btn');
+            
+            if (calcDiv.classList.contains('show')) {
+                calcDiv.classList.remove('show');
+                btn.innerHTML = '<i class="fas fa-eye"></i> Show Calculations';
+            } else {
+                calcDiv.classList.add('show');
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Calculations';
+            }
+        }
+
+        // Project Management Functions
+        function newProject() {
+            if (confirm('Create a new project? Any unsaved changes will be lost.')) {
+                document.getElementById('sizingForm').reset();
+                document.getElementById('project_name').value = 'Untitled Project';
+                // Reset new fields to defaults
+                document.getElementById('primary_parallel_cables').value = '1';
+                document.getElementById('secondary_parallel_cables').value = '1';
+                document.getElementById('primary_max_cable_size').value = '500';
+                document.getElementById('secondary_max_cable_size').value = '500';
+                document.getElementById('primary_loaded_conductors').value = '3';
+                document.getElementById('secondary_loaded_conductors').value = '3';
+                
+                document.getElementById('placeholder').style.display = 'block';
+                document.getElementById('results').classList.remove('show');
+                document.getElementById('actionButtons').style.display = 'none';
+                currentProject = {
+                    name: 'Untitled Project',
+                    data: {},
+                    lastModified: new Date()
+                };
+                updateProgress();
+            }
+        }
+
+        function saveProject() {
+            const projectName = document.getElementById('project_name').value || 'Untitled Project';
+            document.getElementById('saveProjectName').value = projectName;
+            document.getElementById('saveModal').style.display = 'block';
+        }
+
+        function confirmSaveProject() {
+            const name = document.getElementById('saveProjectName').value;
+            const description = document.getElementById('saveProjectDescription').value;
+            
+            if (!name.trim()) {
+                alert('Please enter a project name');
+                return;
+            }
+
+            const projectData = {
+                name: name,
+                description: description,
+                data: getFormData(),
+                lastModified: new Date(),
+                version: '1.1'
+            };
+
+            // Save to localStorage
+            let projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            const existingIndex = projects.findIndex(p => p.name === name);
+            
+            if (existingIndex >= 0) {
+                projects[existingIndex] = projectData;
+            } else {
+                projects.push(projectData);
+            }
+            
+            localStorage.setItem('pwrsyspro_projects', JSON.stringify(projects));
+            currentProject = projectData;
+            
+            alert('Project saved successfully!');
+            closeSaveModal();
+        }
+
+        function getFormData() {
+            const form = document.getElementById('sizingForm');
+            const formData = new FormData(form);
+            const data = {};
+            
+            // Get all input and select values
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                data[input.id] = input.value;
+            });
+            
+            return data;
+        }
+
+        function showLoadModal() {
+            loadProjectList();
+            document.getElementById('loadModal').style.display = 'block';
+        }
+
+        function loadProjectList() {
+            const projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            const listDiv = document.getElementById('projectList');
+            
+            if (projects.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #6c757d;">No saved projects found</p>';
+                return;
+            }
+            
+            listDiv.innerHTML = projects.map(project => `
+                <div class="project-item" onclick="loadProject('${project.name}')">
+                    <h4>${project.name}</h4>
+                    <p>${project.description || 'No description'}</p>
+                    <small>Last modified: ${new Date(project.lastModified).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+        }
+
+        function loadProject(projectName) {
+            const projects = JSON.parse(localStorage.getItem('pwrsyspro_projects') || '[]');
+            const project = projects.find(p => p.name === projectName);
+            
+            if (!project) {
+                alert('Project not found');
+                return;
+            }
+            
+            // Load form data
+            Object.keys(project.data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = project.data[key];
+                }
+            });
+            
+            currentProject = project;
+            closeLoadModal();
+            updateProgress();
+            
+            // Trigger custom voltage display if needed
+            document.getElementById('load_voltage').dispatchEvent(new Event('change'));
+            document.getElementById('service_voltage').dispatchEvent(new Event('change'));
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').style.display = 'none';
+        }
+
+        function closeLoadModal() {
+            document.getElementById('loadModal').style.display = 'none';
+        }
+
+        function generatePDF() {
+            // Simple PDF generation using window.print()
+            // In a production environment, you might want to use a library like jsPDF
+            window.print();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveProject();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        showLoadModal();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        newProject();
+                        break;
+                }
+            }
+        });
+
+        // Enhanced V1.2 Functions
+        function calculateEnhancedParallelCableSize(current_per_cable, distance, voltage, phase, material, maxVD, parallel_count, max_cable_size, installation_method, loaded_conductors, insulation_type) {
+            const wireSizes = [
+                {awg: '14', ampacity: 20}, {awg: '12', ampacity: 25}, {awg: '10', ampacity: 35},
+                {awg: '8', ampacity: 50}, {awg: '6', ampacity: 65}, {awg: '4', ampacity: 85},
+                {awg: '3', ampacity: 100}, {awg: '2', ampacity: 115}, {awg: '1', ampacity: 130},
+                {awg: '1/0', ampacity: 150}, {awg: '2/0', ampacity: 175}, {awg: '3/0', ampacity: 200},
+                {awg: '4/0', ampacity: 230}, {awg: '250', ampacity: 255}, {awg: '300', ampacity: 285},
+                {awg: '350', ampacity: 310}, {awg: '400', ampacity: 335}, {awg: '500', ampacity: 380},
+                {awg: '600', ampacity: 420}, {awg: '700', ampacity: 460}, {awg: '750', ampacity: 475},
+                {awg: '800', ampacity: 490}, {awg: '900', ampacity: 520}, {awg: '1000', ampacity: 545}
+            ];
+            
+            // Enhanced derating factors
+            let derating_factor = 1.0;
+            
+            // Installation method derating
+            switch(installation_method) {
+                case 'conduit': derating_factor *= (loaded_conductors <= 3) ? 1.0 : 0.8; break;
+                case 'cable_tray': derating_factor *= 0.95; break;
+                case 'direct_buried': derating_factor *= 1.0; break;
+                case 'overhead': derating_factor *= 0.9; break;
+                case 'underground_duct': derating_factor *= 0.85; break;
+            }
+            
+            // Material factor (aluminum vs copper)
+            const materialFactor = material === 'aluminum' ? 0.82 : 1.0;
+            
+            // Insulation type factor
+            let insulationFactor = 1.0;
+            switch(insulation_type) {
+                case 'THHN': insulationFactor = 1.0; break;
+                case 'THWN': insulationFactor = 0.98; break;
+                case 'THHN/THWN': insulationFactor = 1.0; break;
+                case 'XHHW': insulationFactor = 1.02; break;
+                case 'XLPE': insulationFactor = 1.05; break;
+                case 'PVC': insulationFactor = 0.95; break;
+                case 'EPR': insulationFactor = 1.03; break;
+            }
+            
+            derating_factor *= materialFactor * insulationFactor;
+            
+            const required_ampacity = current_per_cable / derating_factor;
+            let selectedWire = wireSizes.find(wire => wire.ampacity >= required_ampacity);
+            
+            if (!selectedWire) {
+                selectedWire = wireSizes[wireSizes.length - 1];
+            }
+            
+            // Enhanced voltage drop calculation
+            const K = (material === 'copper') ? 12.9 : 21.2;
+            const actualVD = (K * current_per_cable * distance) / 
+                           (voltage * Math.pow(selectedWire.ampacity * 0.8, 1.1)) * parallel_count;
+            
+            let compliance_status = 'GOOD';
+            if (actualVD > maxVD) compliance_status = 'CRITICAL';
+            else if (actualVD > maxVD * 0.8) compliance_status = 'WARNING';
+            
+            return {
+                size: selectedWire.awg,
+                ampacity: selectedWire.ampacity,
+                voltage_drop: actualVD,
+                compliance_status: compliance_status,
+                derating_factor: derating_factor,
+                material: material,
+                insulation_type: insulation_type,
+                installation_method: installation_method,
+                parallel_count: parallel_count
+            };
+        }
+
+        function checkCompliance(standard, transformer_size, primaryCable, secondaryCable, fault_current) {
+            const compliance = {
+                overall: 'PASS',
+                issues: [],
+                warnings: []
+            };
+            
+            // Standard-specific compliance checks
+            switch(standard) {
+                case 'NEC':
+                case 'PEC':
+                    if (primaryCable.voltage_drop > 3.0) {
+                        compliance.issues.push('Primary voltage drop exceeds NEC/PEC 3% limit');
+                        compliance.overall = 'FAIL';
+                    }
+                    if (secondaryCable.voltage_drop > 5.0) {
+                        compliance.issues.push('Secondary voltage drop exceeds NEC/PEC 5% limit');
+                        compliance.overall = 'FAIL';
+                    }
+                    break;
+                case 'IEC':
+                    if (primaryCable.voltage_drop > 2.5) {
+                        compliance.warnings.push('Primary voltage drop exceeds IEC 2.5% recommendation');
+                    }
+                    if (secondaryCable.voltage_drop > 4.0) {
+                        compliance.warnings.push('Secondary voltage drop exceeds IEC 4% recommendation');
+                    }
+                    break;
+            }
+            
+            // General compliance checks
+            if (fault_current > 100000) {
+                compliance.warnings.push('High fault current - verify KAIC ratings');
+            }
+            
+            if (transformer_size > 2500) {
+                compliance.warnings.push('Large transformer - special installation requirements may apply');
+            }
+            
+            if (compliance.warnings.length > 0 && compliance.overall === 'PASS') {
+                compliance.overall = 'WARNING';
+            }
+            
+            return compliance;
+        }
+
+        function displayEnhancedResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            const results = `
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-microchip"></i>
+                            Enhanced Transformer Sizing
+                        </div>
+                        <div class="result-value">${data.transformer_size} kVA</div>
+                        <div class="result-detail">
+                            Required: ${data.kva.toFixed(2)} kVA<br>
+                            Efficiency: ${data.efficiency.toFixed(1)}%<br>
+                            Load Factor: ${(data.load_kw / data.transformer_size * 100).toFixed(1)}%<br>
+                            Standard: ${data.design_standard}<br>
+                            <span style="color: #667eea;">Expansion Margin: ${data.expansion_margin}%</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-th-large"></i>
+                            Load Analysis
+                        </div>
+                        <div class="result-detail">
+                            <strong>Individual Loads:</strong><br>
+                            Motor: ${data.motor_load || 0} kW → ${data.total_motor_demand.toFixed(2)} kW<br>
+                            Lighting: ${data.lighting_load || 0} kW → ${data.total_lighting_demand.toFixed(2)} kW<br>
+                            Receptacle: ${data.receptacle_load || 0} kW → ${data.total_receptacle_demand.toFixed(2)} kW<br>
+                            HVAC: ${data.hvac_load || 0} kW → ${data.total_hvac_demand.toFixed(2)} kW<br>
+                            <strong>Overall Demand: ${data.overall_demand.toFixed(1)}%</strong>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-mountain"></i>
+                            Environmental Factors
+                        </div>
+                        <div class="result-detail">
+                            Altitude: ${data.site_altitude}m<br>
+                            Altitude Factor: ${data.altitude_factor.toFixed(3)}<br>
+                            Temperature: ${data.ambient_temp}°C<br>
+                            Temp Factor: ${data.temp_factor.toFixed(3)}<br>
+                            Safety Factor: ${data.safety_factor}
+                        </div>
+                    </div>
+
+                    <div class="result-card ${data.compliance.overall === 'PASS' ? 'compliance-pass' : data.compliance.overall === 'WARNING' ? 'compliance-warning' : 'compliance-fail'}">
+                        <div class="result-title">
+                            <i class="fas fa-shield-alt"></i>
+                            Compliance Status
+                        </div>
+                        <div class="result-value">${data.compliance.overall}</div>
+                        <div class="result-detail">
+                            Standard: ${data.design_standard}<br>
+                            ${data.compliance.issues.length > 0 ? '<strong>Issues:</strong><br>' + data.compliance.issues.join('<br>') + '<br>' : ''}
+                            ${data.compliance.warnings.length > 0 ? '<strong>Warnings:</strong><br>' + data.compliance.warnings.join('<br>') : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="parallel-cable-analysis">
+                    <div class="parallel-header">
+                        <i class="fas fa-layer-group"></i>
+                        Enhanced Parallel Cable Analysis
+                    </div>
+                    <div class="cable-config-grid">
+                        <div class="cable-side">
+                            <div class="side-title">Primary Side Configuration</div>
+                            <strong>Cable:</strong> ${data.primaryCable.size} ${data.primaryCable.material}<br>
+                            <strong>Parallel Runs:</strong> ${data.primary_parallel_cables}<br>
+                            <strong>Insulation:</strong> ${data.primaryCable.insulation_type}<br>
+                            <strong>Installation:</strong> ${data.primaryCable.installation_method}<br>
+                            <strong>Ampacity:</strong> ${data.primaryCable.ampacity} A<br>
+                            <strong>Derating:</strong> ${(data.primaryCable.derating_factor * 100).toFixed(1)}%<br>
+                            <strong>Voltage Drop:</strong> ${data.primaryCable.voltage_drop.toFixed(2)}%<br>
+                            <div class="compliance-status ${data.primaryCable.compliance_status === 'GOOD' ? 'compliance-pass' : data.primaryCable.compliance_status === 'WARNING' ? 'compliance-warning' : 'compliance-fail'}">
+                                ${data.primaryCable.compliance_status}
+                            </div>
+                        </div>
+                        <div class="cable-side">
+                            <div class="side-title">Secondary Side Configuration</div>
+                            <strong>Cable:</strong> ${data.secondaryCable.size} ${data.secondaryCable.material}<br>
+                            <strong>Parallel Runs:</strong> ${data.secondary_parallel_cables}<br>
+                            <strong>Insulation:</strong> ${data.secondaryCable.insulation_type}<br>
+                            <strong>Installation:</strong> ${data.secondaryCable.installation_method}<br>
+                            <strong>Ampacity:</strong> ${data.secondaryCable.ampacity} A<br>
+                            <strong>Derating:</strong> ${(data.secondaryCable.derating_factor * 100).toFixed(1)}%<br>
+                            <strong>Voltage Drop:</strong> ${data.secondaryCable.voltage_drop.toFixed(2)}%<br>
+                            <div class="compliance-status ${data.secondaryCable.compliance_status === 'GOOD' ? 'compliance-pass' : data.secondaryCable.compliance_status === 'WARNING' ? 'compliance-warning' : 'compliance-fail'}">
+                                ${data.secondaryCable.compliance_status}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${data.compliance.overall !== 'PASS' ? `
+                <div class="nec-warning-card">
+                    <div class="warning-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ${data.design_standard} Compliance Notice
+                    </div>
+                    <div class="result-detail">
+                        This design requires attention to meet ${data.design_standard} standards. Please review the issues and warnings above.
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            resultsDiv.innerHTML = results;
+            resultsDiv.classList.add('show');
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'block';
+        }
+
+        function showEnhancedCalculationSteps(data) {
+            const calc = `
+                <div class="step">
+                    <strong>1. Enhanced Load Analysis:</strong><br>
+                    Individual Load Categories:<br>
+                    - Motor: ${data.motor_load || 0} kW × 125% = ${data.total_motor_demand ? data.total_motor_demand.toFixed(2) : 0} kW<br>
+                    - Lighting: ${data.lighting_load || 0} kW × 110% = ${data.total_lighting_demand ? data.total_lighting_demand.toFixed(2) : 0} kW<br>
+                    - Receptacle: ${data.receptacle_load || 0} kW × 115% = ${data.total_receptacle_demand ? data.total_receptacle_demand.toFixed(2) : 0} kW<br>
+                    - HVAC: ${data.hvac_load || 0} kW × 125% = ${data.total_hvac_demand ? data.total_hvac_demand.toFixed(2) : 0} kW<br>
+                    Total Calculated Load: ${data.calculated_load ? data.calculated_load.toFixed(2) : data.load_kw} kW
+                </div>
+                
+                <div class="step">
+                    <strong>2. Enhanced Environmental Corrections:</strong><br>
+                    Base kVA: ${data.load_kw} kW ÷ ${data.pf} PF = ${(data.load_kw / data.pf).toFixed(2)} kVA<br>
+                    Expansion Margin: ${data.expansion_margin}% → ${(data.base_kva).toFixed(2)} kVA<br>
+                    Temperature Factor (${data.ambient_temp}°C): ${data.temp_factor.toFixed(3)}<br>
+                    Altitude Factor (${data.site_altitude}m): ${data.altitude_factor.toFixed(3)}<br>
+                    Safety Factor (${data.load_type}): ${data.safety_factor}<br>
+                    Final Required: ${data.kva.toFixed(2)} kVA
+                </div>
+                
+                <div class="step">
+                    <strong>3. ${data.design_standard} Standard Transformer Selection:</strong><br>
+                    Required: ${data.kva.toFixed(2)} kVA<br>
+                    Selected Standard Size: ${data.transformer_size} kVA<br>
+                    Standard: ${data.design_standard} (includes 37.5 kVA option)
+                </div>
+                
+                <div class="step">
+                    <strong>4. Enhanced Parallel Cable Analysis:</strong><br>
+                    <strong>Primary (${data.primary_parallel_cables} parallel):</strong><br>
+                    Total Current: ${(data.flc_primary * 1.25).toFixed(2)} A<br>
+                    Current per Cable: ${data.primary_current_per_cable.toFixed(2)} A<br>
+                    Selected: ${data.primaryCable.size} ${data.primaryCable.material} ${data.primaryCable.insulation_type}<br>
+                    Installation: ${data.primaryCable.installation_method}<br>
+                    Derating Factor: ${(data.primaryCable.derating_factor * 100).toFixed(1)}%<br>
+                    Voltage Drop: ${data.primaryCable.voltage_drop.toFixed(2)}% (max ${data.max_vd_primary}%)<br><br>
+                    
+                    <strong>Secondary (${data.secondary_parallel_cables} parallel):</strong><br>
+                    Total Current: ${(data.flc_secondary * 1.25).toFixed(2)} A<br>
+                    Current per Cable: ${data.secondary_current_per_cable.toFixed(2)} A<br>
+                    Selected: ${data.secondaryCable.size} ${data.secondaryCable.material} ${data.secondaryCable.insulation_type}<br>
+                    Installation: ${data.secondaryCable.installation_method}<br>
+                    Derating Factor: ${(data.secondaryCable.derating_factor * 100).toFixed(1)}%<br>
+                    Voltage Drop: ${data.secondaryCable.voltage_drop.toFixed(2)}% (max ${data.max_vd_secondary}%)
+                </div>
+
+                <div class="step">
+                    <strong>5. ${data.design_standard} Compliance Verification:</strong><br>
+                    Design Standard: ${data.design_standard}<br>
+                    Primary VD Limit: ${data.max_vd_primary}% → ${data.primaryCable.compliance_status}<br>
+                    Secondary VD Limit: ${data.max_vd_secondary}% → ${data.secondaryCable.compliance_status}<br>
+                    Fault Current: ${data.fault_current.toFixed(0)} A (${data.kaic} kA)<br>
+                    Overall Compliance: ${data.compliance ? data.compliance.overall : 'CHECKING'}
+                </div>
+            `;
+            
+            document.getElementById('calculation').innerHTML = calc;
+        }
+
+        function autoSaveProject() {
+            try {
+                const formData = new FormData(document.getElementById('sizingForm'));
+                const data = {};
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                // Save enhanced data
+                data.motor_load = document.getElementById('motor_load').value;
+                data.lighting_load = document.getElementById('lighting_load').value;
+                data.receptacle_load = document.getElementById('receptacle_load').value;
+                data.hvac_load = document.getElementById('hvac_load').value;
+                data.site_altitude = document.getElementById('site_altitude').value;
+                data.expansion_margin = document.getElementById('expansion_margin').value;
+                
+                const autoSaveData = {
+                    name: 'Auto-saved Project',
+                    data: data,
+                    lastModified: new Date(),
+                    autoSave: true
+                };
+                
+                localStorage.setItem('pwrsyspro_autosave', JSON.stringify(autoSaveData));
+                
+                // Show auto-save indicator
+                const indicator = document.getElementById('autoSaveIndicator');
+                indicator.classList.add('show');
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 2000);
+                
+            } catch (error) {
+                console.log('Auto-save failed:', error);
+            }
+        }
+
+        function showErrorMessage(message) {
+            // Create error message if it doesn't exist
+            let errorDiv = document.getElementById('errorMessage');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'errorMessage';
+                errorDiv.className = 'error-message';
+                document.querySelector('.form-section').appendChild(errorDiv);
+            }
+            
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Enhanced initialization with auto-calculation for load categories
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for load category inputs
+            const loadInputs = ['motor_load', 'lighting_load', 'receptacle_load', 'hvac_load',
+                              'motor_demand', 'lighting_demand', 'receptacle_demand', 'hvac_demand'];
+            
+            loadInputs.forEach(inputId => {
+                const element = document.getElementById(inputId);
+                if (element) {
+                    element.addEventListener('input', calculateTotalLoad);
+                }
+            });
+            
+            // Enhanced progress tracking
+            const allInputs = document.querySelectorAll('input, select');
+            allInputs.forEach(input => {
+                input.addEventListener('change', updateProgress);
+                input.addEventListener('input', autoSaveProject);
+            });
+        });
+
+        function calculateTotalLoad() {
+            const motor_load = parseFloat(document.getElementById('motor_load').value) || 0;
+            const lighting_load = parseFloat(document.getElementById('lighting_load').value) || 0;
+            const receptacle_load = parseFloat(document.getElementById('receptacle_load').value) || 0;
+            const hvac_load = parseFloat(document.getElementById('hvac_load').value) || 0;
+            
+            const motor_demand = parseFloat(document.getElementById('motor_demand').value) || 100;
+            const lighting_demand = parseFloat(document.getElementById('lighting_demand').value) || 100;
+            const receptacle_demand = parseFloat(document.getElementById('receptacle_demand').value) || 50;
+            const hvac_demand = parseFloat(document.getElementById('hvac_demand').value) || 100;
+            
+            const total_motor_demand = motor_load * (motor_demand / 100) * 1.25;
+            const total_lighting_demand = lighting_load * (lighting_demand / 100) * 1.10;
+            const total_receptacle_demand = receptacle_load * (receptacle_demand / 100) * 1.15;
+            const total_hvac_demand = hvac_load * (hvac_demand / 100) * 1.25;
+            
+            const calculated_load = total_motor_demand + total_lighting_demand + total_receptacle_demand + total_hvac_demand;
+            
+            document.getElementById('total_calculated_load').value = calculated_load.toFixed(2);
+            
+            const total_connected = motor_load + lighting_load + receptacle_load + hvac_load;
+            const overall_demand = total_connected > 0 ? (calculated_load / (total_connected * 1.20)) * 100 : 100;
+            document.getElementById('overall_demand_factor').value = overall_demand.toFixed(1);
+            
+            // Update main load field if calculated load is available
+            if (calculated_load > 0) {
+                document.getElementById('load_kw').value = calculated_load.toFixed(2);
+            }
+        }
+    </script>
+</body>
+</html>
